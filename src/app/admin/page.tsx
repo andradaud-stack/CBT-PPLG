@@ -213,12 +213,12 @@ export default function AdminPage() {
     return () => clearInterval(timer);
   }, [lockoutSec]);
 
-  const handlePasskeySubmit = (e: React.FormEvent) => {
+  const handlePasskeySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasskeyError(null);
     setIsSubmittingPasskey(true);
 
-    const result = verifyAdminPasskey(passkeyInput);
+    const result = await verifyAdminPasskey(passkeyInput);
     if (result.success) {
       setIsAuthenticated(true);
       setPasskeyInput("");
@@ -233,14 +233,14 @@ export default function AdminPage() {
     setIsSubmittingPasskey(false);
   };
 
-  const handleChangePasskeySubmit = (e: React.FormEvent) => {
+  const handleChangePasskeySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setChangePasskeyMsg(null);
     if (newPasskeyInput !== confirmPasskeyInput) {
       setChangePasskeyMsg({ text: "Konfirmasi passkey baru tidak cocok.", isError: true });
       return;
     }
-    const res = changeAdminPasskey(currentPasskeyInput, newPasskeyInput);
+    const res = await changeAdminPasskey(currentPasskeyInput, newPasskeyInput);
     if (res.success) {
       setChangePasskeyMsg({ text: res.message, isError: false });
       setCurrentPasskeyInput("");
@@ -574,7 +574,7 @@ export default function AdminPage() {
                 <div className="space-y-1.5">
                   <label className="text-[12px] font-medium text-on-surface flex items-center justify-between">
                     <span>Master Passkey Admin</span>
-                    <span className="text-[10px] font-mono text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">Default: cbt-admin-2026</span>
+                    <span className="text-[10px] font-mono text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">Terproteksi Kriptografi Server</span>
                   </label>
                   <div className="relative">
                     <input
@@ -2033,7 +2033,7 @@ export default function AdminPage() {
                       required
                       value={currentPasskeyInput}
                       onChange={(e) => setCurrentPasskeyInput(e.target.value)}
-                      placeholder="Masukkan passkey lama (default: cbt-admin-2026)"
+                      placeholder="Masukkan passkey lama saat ini..."
                       className="w-full px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant text-body-sm font-mono text-on-surface"
                     />
                   </div>

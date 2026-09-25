@@ -385,6 +385,17 @@ export default function LoginPage() {
               </p>
             </div>
           )}
+
+          {/* Admin Portal Direct Link */}
+          <div className="pt-space-xs border-t border-outline-variant text-center">
+            <Link
+              href="/admin"
+              className="text-[12px] font-mono text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Lock className="w-3.5 h-3.5 text-amber-500" />
+              <span>Akses Portal Admin &amp; Pengawas</span>
+            </Link>
+          </div>
         </div>
       </main>
 

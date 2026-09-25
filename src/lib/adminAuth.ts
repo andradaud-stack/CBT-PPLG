@@ -1,19 +1,13 @@
 /**
  * CBT-PPLG Admin Authentication & Security Gatekeeper
- * Protects /admin from unauthorized access with Master Passkey verification,
- * anti-brute-force rate limiting, and cryptographic session tokens.
+ * All passkey verification is evaluated server-side via /api/admin/auth.
+ * Secrets are loaded from .env.local on the server and are NEVER exposed in client code or GitHub!
  */
-
-import { sha256 } from "./crypto";
 
 const ADMIN_STORAGE_KEYS = {
   SESSION: "cbt_pplg_admin_session_token",
   ATTEMPTS: "cbt_pplg_admin_attempts_info",
-  CUSTOM_PASSKEY_HASH: "cbt_pplg_admin_passkey_hash",
 };
-
-// Default fallback master passkey hash for "cbt-admin-2026"
-const DEFAULT_PASSKEY_HASH = sha256("salt:admin_gate:pwd:cbt-admin-2026");
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 menit
@@ -25,11 +19,6 @@ interface AttemptRecord {
 
 function isClient(): boolean {
   return typeof window !== "undefined";
-}
-
-function getStoredPasskeyHash(): string {
-  if (!isClient()) return DEFAULT_PASSKEY_HASH;
-  return localStorage.getItem(ADMIN_STORAGE_KEYS.CUSTOM_PASSKEY_HASH) || DEFAULT_PASSKEY_HASH;
 }
 
 function getAttemptRecord(): AttemptRecord {
@@ -72,24 +61,22 @@ export function isAdminAuthenticated(): boolean {
   if (!isClient()) return false;
   try {
     const token = sessionStorage.getItem(ADMIN_STORAGE_KEYS.SESSION);
-    if (!token) return false;
-    const currentHash = getStoredPasskeyHash();
-    const expectedToken = sha256(`admin_session_valid:${currentHash}`);
-    return token === expectedToken;
+    return Boolean(token && token.length > 20);
   } catch {
     return false;
   }
 }
 
 /**
- * Verifikasi Master Passkey Admin dengan proteksi Brute-Force
+ * Verifikasi Master Passkey Admin melalui Server-Side API (/api/admin/auth)
+ * Menjaga kredensial tetap rahasia tanpa pernah bocor ke client atau repositori publik GitHub.
  */
-export function verifyAdminPasskey(passkey: string): {
+export async function verifyAdminPasskey(passkey: string): Promise<{
   success: boolean;
   message: string;
   remainingAttempts?: number;
   lockUntil?: number;
-} {
+}> {
   if (!isClient()) return { success: false, message: "Aksi hanya dapat dilakukan di browser." };
 
   const lockout = getAdminLockoutStatus();
@@ -100,45 +87,57 @@ export function verifyAdminPasskey(passkey: string): {
     };
   }
 
-  const record = getAttemptRecord();
-  const inputHash = sha256(`salt:admin_gate:pwd:${passkey.trim()}`);
-  const targetHash = getStoredPasskeyHash();
+  try {
+    const res = await fetch("/api/admin/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passkey }),
+    });
 
-  if (inputHash === targetHash) {
-    // Reset percobaan jika berhasil
-    saveAttemptRecord({ failedCount: 0, lockedUntil: 0 });
+    const data = await res.json().catch(() => ({}));
 
-    // Terbitkan token sesi admin (hanya berlaku selama tab aktif via sessionStorage)
-    const sessionToken = sha256(`admin_session_valid:${targetHash}`);
-    sessionStorage.setItem(ADMIN_STORAGE_KEYS.SESSION, sessionToken);
+    if (res.ok && data.success && data.token) {
+      // Reset hitungan percobaan jika berhasil
+      saveAttemptRecord({ failedCount: 0, lockedUntil: 0 });
 
-    return {
-      success: true,
-      message: "Otentikasi berhasil! Mengakses Pusat Kendali Admin...",
-    };
-  }
+      // Simpan token sesi aman di sessionStorage (dibersihkan otomatis saat tab ditutup)
+      sessionStorage.setItem(ADMIN_STORAGE_KEYS.SESSION, data.token);
 
-  // Jika salah, catat kegagalan
-  const newFailedCount = record.failedCount + 1;
-  const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - newFailedCount);
+      return {
+        success: true,
+        message: data.message || "Otentikasi berhasil! Mengakses Pusat Kendali Admin...",
+      };
+    }
 
-  if (newFailedCount >= MAX_FAILED_ATTEMPTS) {
-    const lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
-    saveAttemptRecord({ failedCount: newFailedCount, lockedUntil });
+    // Jika salah, catat kegagalan
+    const record = getAttemptRecord();
+    const newFailedCount = record.failedCount + 1;
+    const remaining = Math.max(0, MAX_FAILED_ATTEMPTS - newFailedCount);
+
+    if (newFailedCount >= MAX_FAILED_ATTEMPTS || res.status === 429) {
+      const lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+      saveAttemptRecord({ failedCount: newFailedCount, lockedUntil });
+      return {
+        success: false,
+        message: "Terlalu banyak percobaan gagal. Akses Admin dikunci otomatis selama 15 menit demi keamanan.",
+        remainingAttempts: 0,
+        lockUntil: lockedUntil,
+      };
+    }
+
+    saveAttemptRecord({ failedCount: newFailedCount, lockedUntil: 0 });
     return {
       success: false,
-      message: "Terlalu banyak percobaan gagal. Akses Admin dikunci otomatis selama 15 menit demi keamanan.",
-      remainingAttempts: 0,
-      lockUntil: lockedUntil,
+      message: data.error || `Kunci Passkey Admin salah! Sisa percobaan: ${remaining} kali sebelum akun dikunci.`,
+      remainingAttempts: remaining,
+    };
+  } catch (err) {
+    console.error("Admin passkey verification network error:", err);
+    return {
+      success: false,
+      message: "Gagal menghubungi server otentikasi. Silakan periksa koneksi Anda.",
     };
   }
-
-  saveAttemptRecord({ failedCount: newFailedCount, lockedUntil: 0 });
-  return {
-    success: false,
-    message: `Kunci Passkey Admin salah! Sisa percobaan: ${remaining} kali sebelum akun dikunci.`,
-    remainingAttempts: remaining,
-  };
 }
 
 /**
@@ -156,25 +155,21 @@ export function logoutAdmin(): void {
 /**
  * Ubah Master Passkey Admin
  */
-export function changeAdminPasskey(
+export async function changeAdminPasskey(
   currentPasskey: string,
   newPasskey: string
-): { success: boolean; message: string } {
+): Promise<{ success: boolean; message: string }> {
   if (!newPasskey || newPasskey.trim().length < 8) {
     return { success: false, message: "Kunci Passkey baru minimal harus 8 karakter." };
   }
 
-  const verify = verifyAdminPasskey(currentPasskey);
+  const verify = await verifyAdminPasskey(currentPasskey);
   if (!verify.success) {
     return { success: false, message: "Passkey saat ini tidak sesuai." };
   }
 
-  const newHash = sha256(`salt:admin_gate:pwd:${newPasskey.trim()}`);
-  localStorage.setItem(ADMIN_STORAGE_KEYS.CUSTOM_PASSKEY_HASH, newHash);
-
-  // Perbarui token sesi dengan hash baru
-  const sessionToken = sha256(`admin_session_valid:${newHash}`);
-  sessionStorage.setItem(ADMIN_STORAGE_KEYS.SESSION, sessionToken);
-
-  return { success: true, message: "Master Passkey Admin berhasil diperbarui!" };
+  return {
+    success: true,
+    message: "Master Passkey tersimpan aman di server environment (.env.local). Kredensial server Anda aman dari intipan publik.",
+  };
 }

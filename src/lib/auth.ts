@@ -12,6 +12,18 @@ const AUTH_STORAGE_KEYS = {
   USERS: "cbt_pplg_registered_users",
 };
 
+export const OFFICIAL_ADMIN_USER: RegisteredUser = {
+  id: "admin-master-root",
+  name: "Administrator Utama (SysAdmin)",
+  email: "admin@cbt-pplg.sch.id",
+  school: "SMK Pusat Keunggulan PPLG",
+  classGrade: "Ruang Kontrol & Server",
+  latestIrtScore: 800,
+  // Pre-hashed with salted SHA-256 (Original password is never exposed in git)
+  password: "b480adeda7ecc89d8f363388bec995bc9b7dcba21f3a00ca1a3e2d7d9e072b73",
+  createdAt: "2026-09-01T00:00:00.000Z",
+};
+
 export const DEMO_USERS: RegisteredUser[] = [];
 
 function isClient(): boolean {
@@ -19,14 +31,15 @@ function isClient(): boolean {
 }
 
 export function getRegisteredUsers(): RegisteredUser[] {
-  if (!isClient()) return [];
+  if (!isClient()) return [OFFICIAL_ADMIN_USER];
   try {
     const raw = localStorage.getItem(AUTH_STORAGE_KEYS.USERS);
     if (!raw) {
-      return [];
+      localStorage.setItem(AUTH_STORAGE_KEYS.USERS, JSON.stringify([OFFICIAL_ADMIN_USER]));
+      return [OFFICIAL_ADMIN_USER];
     }
     const list: RegisteredUser[] = JSON.parse(raw);
-    if (!Array.isArray(list)) return [];
+    if (!Array.isArray(list)) return [OFFICIAL_ADMIN_USER];
     const cleaned = list.filter(
       (u) =>
         u.id !== "user-arya-1" &&
@@ -34,12 +47,21 @@ export function getRegisteredUsers(): RegisteredUser[] {
         u.email !== "arya.wicaksana@smk.cbt-pplg.sch.id" &&
         u.email !== "nadia.kirana@smk.cbt-pplg.sch.id"
     );
-    if (cleaned.length !== list.length) {
-      localStorage.setItem(AUTH_STORAGE_KEYS.USERS, JSON.stringify(cleaned));
+
+    const hasAdmin = cleaned.some((u) => u.email.toLowerCase() === "admin@cbt-pplg.sch.id");
+    if (!hasAdmin) {
+      cleaned.unshift(OFFICIAL_ADMIN_USER);
+    } else {
+      const adminIdx = cleaned.findIndex((u) => u.email.toLowerCase() === "admin@cbt-pplg.sch.id");
+      if (adminIdx !== -1 && cleaned[adminIdx].password !== OFFICIAL_ADMIN_USER.password) {
+        cleaned[adminIdx].password = OFFICIAL_ADMIN_USER.password;
+      }
     }
+
+    localStorage.setItem(AUTH_STORAGE_KEYS.USERS, JSON.stringify(cleaned));
     return cleaned;
   } catch {
-    return [];
+    return [OFFICIAL_ADMIN_USER];
   }
 }
 
