@@ -396,6 +396,18 @@ export function saveAttempt(attempt: Attempt): void {
       });
     }
 
+    // Background sync ke TiDB Serverless jika tersedia (tanpa memblokir UI)
+    try {
+      const currentUser = getUserProfile();
+      fetch("/api/attempts/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ attempt, userName: currentUser.name }),
+      }).catch(() => {});
+    } catch {
+      // Ignored for offline local fallback
+    }
+
     touchLastActiveTime();
   } catch (err) {
     console.error("Error saving attempt:", err);
