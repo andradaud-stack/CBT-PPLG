@@ -4,6 +4,7 @@ import path from "path";
 import { z } from "zod";
 import { LeaderboardEntry } from "@/types";
 import { checkRateLimit, validateExamSubmission, sanitizeInput } from "@/lib/security";
+import { verifyExamSignature } from "@/lib/crypto";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LEADERBOARD_FILE = path.join(DATA_DIR, "leaderboard.json");
@@ -64,6 +65,7 @@ const SubmissionSchema = z.object({
   packageId: z.number().min(1),
   packageName: z.string().min(1),
   streak: z.number().optional().default(1),
+  signature: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -150,6 +152,25 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           error: `Integritas Ujian Ditolak: ${reasonMsg}. Percobaan ini tidak dapat dicatat ke papan peringkat resmi demi keadilan kompetisi.`,
+        },
+        { status: 422 }
+      );
+    }
+
+    // 2.5 Cryptographic Signature Verification (Anti-Spoofing & cURL / DevTools Tampering)
+    const isSignatureValid = verifyExamSignature(sub.signature, {
+      userId: sub.userId,
+      packageId: sub.packageId,
+      totalQuestions: sub.totalQuestions,
+      totalCorrect: sub.totalCorrect,
+      score: sub.score,
+    });
+
+    if (!isSignatureValid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Integritas Kriptografi Ditolak: Tanda tangan digital (signature) ujian tidak valid atau terindikasi manipulasi sepihak melalui DevTools/API eksternal.",
         },
         { status: 422 }
       );

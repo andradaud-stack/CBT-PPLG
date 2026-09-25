@@ -11,6 +11,7 @@ import { calculateIRTResult } from "@/lib/irt";
 import { getAttempts, saveAttempt, getUserProfile } from "@/lib/storage";
 import { getAuthSession } from "@/lib/auth";
 import { recordQuestionAnsweredToday, recordSimulationCompletedThisWeek, getLearningGoals } from "@/lib/targets";
+import { createExamSignature } from "@/lib/crypto";
 import {
   TRYOUT_PACKAGES,
   getTryoutPackagesStatus,
@@ -429,11 +430,20 @@ export default function SimulationPage() {
     try {
       const user = getAuthSession().user || getUserProfile();
       const goals = getLearningGoals();
+      const submissionUserId = user.id || "siswa-" + Date.now();
+      const signature = createExamSignature({
+        userId: submissionUserId,
+        packageId: selectedPackageId,
+        totalQuestions: irtResult.totalQuestions,
+        totalCorrect: irtResult.totalCorrect,
+        score: irtResult.score,
+      });
+
       fetch("/api/leaderboard", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: user.id || "siswa-" + Date.now(),
+          userId: submissionUserId,
           name: user.name || "Siswa PPLG",
           school: user.school || "SMK",
           classGrade: user.classGrade || "XII PPLG",
@@ -446,6 +456,7 @@ export default function SimulationPage() {
           packageId: selectedPackageId,
           packageName: selectedPackage.title,
           streak: goals.currentStreak || 1,
+          signature,
         }),
       }).catch((err) => console.warn("Leaderboard sync error:", err));
     } catch (e) {

@@ -1,5 +1,6 @@
 import { UserProfile } from "@/types";
 import { saveUserProfile } from "./storage";
+import { hashPassword, verifyPassword } from "./crypto";
 
 export interface RegisteredUser extends UserProfile {
   password?: string;
@@ -114,7 +115,7 @@ export function loginUser(email: string, password?: string): { success: boolean;
     };
   }
 
-  if (password && user.password && user.password !== password) {
+  if (password && user.password && !verifyPassword(password, user.password)) {
     return {
       success: false,
       message: "Kata sandi salah. Silakan periksa kembali.",
@@ -151,6 +152,9 @@ export function registerUser(userData: {
     };
   }
 
+  const rawPassword = userData.password || "password123";
+  const hashedPassword = hashPassword(rawPassword);
+
   const newUser: RegisteredUser = {
     id: `user-${Date.now()}`,
     name: userData.name.trim(),
@@ -158,7 +162,7 @@ export function registerUser(userData: {
     school: userData.school.trim(),
     classGrade: userData.classGrade.trim(),
     latestIrtScore: 0, // Awal dari 0
-    password: userData.password || "password123",
+    password: hashedPassword,
     createdAt: new Date().toISOString(),
   };
 
