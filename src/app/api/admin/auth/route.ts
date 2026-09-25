@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/security";
-import { sha256 } from "@/lib/crypto";
+import { sha256, hashPassword } from "@/lib/crypto";
 
-// Default secure fallback if environment variable is not defined
-const SERVER_ADMIN_PASSKEY = process.env.ADMIN_MASTER_PASSKEY || "admin-cbt-secure-2026";
+// Fallback hash (Salted SHA-256) untuk memastikan akun tetap langsung aktif di Vercel/Cloud meski belum menyetel ENV
+const FALLBACK_PASSKEY_HASH = "b480adeda7ecc89d8f363388bec995bc9b7dcba21f3a00ca1a3e2d7d9e072b73";
 
 export async function POST(req: NextRequest) {
   // 1. Rate Limiting Protection (Anti-Brute Force at Server Level: max 5 attempts per 15 minutes)
@@ -36,10 +36,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Bandingkan passkey secara aman di sisi Server
-    if (passkey === SERVER_ADMIN_PASSKEY) {
+    // Bandingkan passkey secara aman di sisi Server:
+    // 1) Gunakan nilai dari process.env.ADMIN_MASTER_PASSKEY jika dikonfigurasi di dashboard hosting (Vercel)
+    // 2) Atau verifikasi kecocokan hash satu arah (Salted SHA-256) jika ENV belum disetel
+    const envPasskey = process.env.ADMIN_MASTER_PASSKEY;
+    const isPasskeyCorrect = envPasskey
+      ? passkey === envPasskey
+      : hashPassword(passkey) === FALLBACK_PASSKEY_HASH;
+
+    if (isPasskeyCorrect) {
       // Terbitkan token sesi terverifikasi kriptografi
-      const sessionToken = sha256(`admin_session_valid:${SERVER_ADMIN_PASSKEY}:salt_sys`);
+      const sessionToken = sha256(`admin_session_valid:${passkey}:salt_sys`);
 
       return NextResponse.json({
         success: true,
