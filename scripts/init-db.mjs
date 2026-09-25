@@ -41,35 +41,58 @@ async function main() {
   console.log("   CBT-PPLG: Inisialisasi Database TiDB Serverless");
   console.log("=======================================================\n");
 
-  const databaseUrl = process.env.DATABASE_URL;
+  let databaseUrl = process.env.DATABASE_URL;
   const tidbHost = process.env.TIDB_HOST;
 
   if (!databaseUrl && !tidbHost) {
     console.error("❌ Peringatan: DATABASE_URL atau TIDB_HOST belum ditemukan di .env.local!");
-    console.log("\nCara mendapatkan TiDB Serverless gratis:");
-    console.log("1. Kunjungi https://tidbcloud.com dan login.");
-    console.log("2. Buat cluster baru 'Serverless' (Free tier, 5 GB gratis selamanya).");
-    console.log("3. Klik 'Connect', pilih endpoint Type 'Node.js' atau 'General'.");
-    console.log("4. Salin connection string ke .env.local, contoh:");
-    console.log('   DATABASE_URL="mysql://<user>:<password>@<host>:4000/<dbname>?ssl={\\"rejectUnauthorized\\":true}"\n');
-    console.log("File skema SQL telah siap di: db/schema.sql");
-    console.log("Anda juga dapat menyalin isi db/schema.sql langsung ke SQL Editor di TiDB Cloud Console.\n");
     process.exit(0);
   }
 
   try {
     console.log("⏳ Menghubungkan ke TiDB Serverless cluster...");
-    const client = connect({
-      url: databaseUrl || undefined,
+
+    // 1. Buat koneksi awal untuk memastikan database target 'cbt_pplg' sudah ada
+    // Jika URL mengarah ke /sys atau database lain, coba buat database cbt_pplg
+    let initialUrl = databaseUrl;
+    if (databaseUrl && databaseUrl.includes("/sys?")) {
+      initialUrl = databaseUrl.replace("/sys?", "/test?");
+    }
+
+    let client = connect({
+      url: initialUrl || undefined,
       host: tidbHost,
       username: process.env.TIDB_USER,
       password: process.env.TIDB_PASSWORD,
-      database: process.env.TIDB_DATABASE || "cbt_pplg",
+      database: "test",
       port: process.env.TIDB_PORT ? parseInt(process.env.TIDB_PORT, 10) : 4000,
     });
 
-    const ping = await client.execute("SELECT 1 as ping;");
-    console.log("✅ Berhasil terkoneksi ke TiDB Serverless!\n");
+    try {
+      await client.execute("CREATE DATABASE IF NOT EXISTS `cbt_pplg`;");
+      console.log("📦 Database `cbt_pplg` dipastikan telah dibuat/tersedia.");
+    } catch (dbCreateErr) {
+      console.log("ℹ️ Info pengecekan database:", dbCreateErr.message);
+    }
+
+    // 2. Hubungkan ke database cbt_pplg
+    let targetUrl = databaseUrl;
+    if (databaseUrl) {
+      // Pastikan mengarah ke /cbt_pplg
+      targetUrl = databaseUrl.replace(/\/[a-zA-Z0-9_-]+\?/, "/cbt_pplg?");
+    }
+
+    client = connect({
+      url: targetUrl || undefined,
+      host: tidbHost,
+      username: process.env.TIDB_USER,
+      password: process.env.TIDB_PASSWORD,
+      database: "cbt_pplg",
+      port: process.env.TIDB_PORT ? parseInt(process.env.TIDB_PORT, 10) : 4000,
+    });
+
+    await client.execute("SELECT 1 as ping;");
+    console.log("✅ Berhasil terkoneksi ke TiDB Serverless (Database: cbt_pplg)!\n");
 
     const schemaPath = path.join(rootDir, "db", "schema.sql");
     if (!fs.existsSync(schemaPath)) {
@@ -79,13 +102,20 @@ async function main() {
     console.log("📖 Membaca skema DDL dari db/schema.sql...");
     const rawSql = fs.readFileSync(schemaPath, "utf-8");
 
-    // Bersihkan komentar SQL dan pisahkan query berdasarkan semicolon
-    const statements = rawSql
-      .split(/;\s*$/m)
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0 && !s.startsWith("--"));
+    // Hapus komentar baris (-- ...) dan normalisasi newline
+    const cleanedSql = rawSql
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .filter((line) => !line.trim().startsWith("--"))
+      .join("\n");
 
-    console.log(`🚀 Mengeksekusi ${statements.length} blok SQL...`);
+    // Pisahkan query berdasarkan titik koma (semicolon)
+    const statements = cleanedSql
+      .split(";")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    console.log(`🚀 Mengeksekusi ${statements.length} blok SQL skema CBT-PPLG...`);
     let successCount = 0;
 
     for (const sql of statements) {
@@ -98,7 +128,7 @@ async function main() {
       }
     }
 
-    console.log(`\n🎉 Berhasil mengeksekusi skema database (${successCount}/${statements.length} blok berhasil).`);
+    console.log(`\n🎉 Berhasil mengeksekusi skema database (${successCount}/${statements.length} blok sukses).`);
 
     // Tampilkan daftar tabel yang ada
     const tablesRes = await client.execute("SHOW TABLES;");
@@ -106,7 +136,7 @@ async function main() {
       ? tablesRes.map((r) => Object.values(r)[0])
       : [];
 
-    console.log("\n📊 Ringkasan Tabel di TiDB:");
+    console.log("\n📊 Ringkasan Tabel di TiDB (`cbt_pplg`):");
     for (const tableName of tableNames) {
       try {
         const countRes = await client.execute(`SELECT COUNT(*) as count FROM \`${tableName}\`;`);
