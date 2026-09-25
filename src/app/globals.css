@@ -3,25 +3,206 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surface & Canvas Tokens */
+  --color-surface: #fafafb;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-bright: #fafafb;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f8fafc;
+  --color-surface-container: #f1f5f9;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-surface-variant: #d3e4fe;
+  --color-on-surface: #0f172a;
+  --color-on-surface-variant: #464554;
+  --color-inverse-surface: #213145;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-outline: #777586;
+  --color-outline-variant: #e2e8f0;
+  --color-surface-tint: #4338ca;
+
+  /* Brand Primary */
+  --color-primary: #4338ca;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #3730a3;
+  --color-on-primary-container: #c1beff;
+  --color-inverse-primary: #c3c0ff;
+
+  /* Secondary */
+  --color-secondary: #565e74;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #dae2fd;
+  --color-on-secondary-container: #5c647a;
+
+  /* Tertiary / AI Intelligence */
+  --color-tertiary: #6366f1;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #eef2ff;
+  --color-on-tertiary-container: #3730a3;
+
+  /* Semantic Feedback */
+  --color-success: #10b981;
+  --color-on-success: #ffffff;
+  --color-success-container: #ecfdf5;
+  --color-on-success-container: #065f46;
+
+  --color-warning: #f59e0b;
+  --color-on-warning: #ffffff;
+  --color-warning-container: #fffbeb;
+  --color-on-warning-container: #92400e;
+
+  --color-error: #ef4444;
+  --color-on-error: #ffffff;
+  --color-error-container: #fef2f2;
+  --color-on-error-container: #991b1b;
+
+  /* Fixed Variants */
+  --color-primary-fixed: #e3dfff;
+  --color-primary-fixed-dim: #c3c0ff;
+  --color-on-primary-fixed: #100069;
+  --color-on-primary-fixed-variant: #372abf;
+
+  --color-secondary-fixed: #dae2fd;
+  --color-secondary-fixed-dim: #bec6e0;
+  --color-on-secondary-fixed: #131b2e;
+  --color-on-secondary-fixed-variant: #3f465c;
+
+  --color-tertiary-fixed: #e1e0ff;
+  --color-tertiary-fixed-dim: #c0c1ff;
+  --color-on-tertiary-fixed: #07006c;
+  --color-on-tertiary-fixed-variant: #2f2ebe;
+
+  /* Background & Foreground Aliases */
+  --color-background: #fafafb;
+  --color-on-background: #0f172a;
+
+  /* Elevation Shadows */
+  --shadow-elevation-0: none;
+  --shadow-elevation-1: 0 1px 3px 0 rgba(15, 23, 42, 0.04);
+  --shadow-elevation-2: 0 4px 6px -1px rgba(67, 56, 202, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-elevation-3: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.02);
+  --shadow-ai-glow: 0 0 0 1px #a5b4fc, 0 4px 12px 0 rgba(99, 102, 241, 0.12);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --color-surface: #0f172a;
+  --color-surface-dim: #020617;
+  --color-surface-bright: #1e293b;
+  --color-surface-container-lowest: #0b1120;
+  --color-surface-container-low: #131d31;
+  --color-surface-container: #1e293b;
+  --color-surface-container-high: #27354f;
+  --color-surface-container-highest: #334155;
+  --color-surface-variant: #1e293b;
+  --color-on-surface: #f8fafc;
+  --color-on-surface-variant: #94a3b8;
+  --color-inverse-surface: #fafafb;
+  --color-inverse-on-surface: #0f172a;
+  --color-outline: #64748b;
+  --color-outline-variant: #1e293b;
+  --color-surface-tint: #818cf8;
+
+  --color-primary: #6366f1;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #3730a3;
+  --color-on-primary-container: #e0e7ff;
+  --color-inverse-primary: #4338ca;
+
+  --color-secondary: #94a3b8;
+  --color-on-secondary: #0f172a;
+  --color-secondary-container: #1e293b;
+  --color-on-secondary-container: #cbd5e1;
+
+  --color-tertiary: #818cf8;
+  --color-on-tertiary: #0f172a;
+  --color-tertiary-container: #1e1b4b;
+  --color-on-tertiary-container: #c7d2fe;
+
+  --color-success: #10b981;
+  --color-on-success: #ffffff;
+  --color-success-container: #064e3b;
+  --color-on-success-container: #a7f3d0;
+
+  --color-warning: #f59e0b;
+  --color-on-warning: #ffffff;
+  --color-warning-container: #451a03;
+  --color-on-warning-container: #fde68a;
+
+  --color-error: #ef4444;
+  --color-on-error: #ffffff;
+  --color-error-container: #450a0a;
+  --color-on-error-container: #fecdd3;
+
+  --color-background: #0f172a;
+  --color-on-background: #f8fafc;
+
+  --shadow-elevation-1: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-elevation-3: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-ai-glow: 0 0 0 1px #6366f1, 0 4px 16px 0 rgba(99, 102, 241, 0.25);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* Custom scrollbars matching Nordic clean aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+/* Print Stylesheet for Official Kemendikdasmen Report */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1.5cm;
   }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt;
+  }
+
+  aside,
+  header,
+  nav,
+  button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+
+/* Anti-Curang: Sembunyikan total AI Tutor selama ujian berlangsung */
+body[data-exam-active="true"] [aria-label="Tanya AI Tutor CBT-PPLG"],
+body[data-exam-active="true"] .ai-tutor-window,
+body[data-exam-active="true"] .ai-tutor-floating-button {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
 }
