@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { checkRateLimit, detectPromptInjection, sanitizeInput } from "@/lib/security";
 
 const ChatRequestSchema = z.object({
   messages: z.array(
@@ -29,6 +30,18 @@ const ChatRequestSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Rate Limiting Protection (Anti-Spam & DoS)
+    const rateCheck = checkRateLimit(req, { keyPrefix: "ai-chat", limit: 25, windowMs: 60000 });
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Batas interaksi terlampaui. Silakan tunggu ${rateCheck.resetInSec} detik sebelum mengirim pesan kembali demi kenyamanan server.`,
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const parseResult = ChatRequestSchema.safeParse(body);
 
@@ -40,7 +53,19 @@ export async function POST(req: NextRequest) {
     }
 
     const { messages, context } = parseResult.data;
-    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const rawUserMessage = messages[messages.length - 1]?.content || "";
+
+    // 2. Prompt Injection & Jailbreak Defense (Cybersecurity Shield)
+    const injectionCheck = detectPromptInjection(rawUserMessage);
+    if (injectionCheck.isSuspicious) {
+      return NextResponse.json({
+        success: true,
+        reply:
+          "🛡️ **Peringatan Keamanan Sistem CBT**: Sistem mendeteksi upaya bypass atau manipulasi instruksi terproteksi.\n\nSebagai asisten belajar resmi SMK PPLG, saya diprogram untuk menjaga integritas akademik. Saya tetap siap membimbingmu memahami logika pemrograman, arsitektur OOP, jaringan komputer, atau materi TKA lainnya secara etis dan mendalam. Apa konsep yang ingin kamu bahas?",
+      });
+    }
+
+    const lastUserMessage = sanitizeInput(rawUserMessage);
 
     // Konfigurasi 9Router / Groq Cloud
     const routerBase = process.env.ROUTER_API_BASE || "http://localhost:20128/v1";

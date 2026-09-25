@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import { z } from "zod";
 import { LeaderboardEntry } from "@/types";
+import { checkRateLimit, validateExamSubmission, sanitizeInput } from "@/lib/security";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LEADERBOARD_FILE = path.join(DATA_DIR, "leaderboard.json");
@@ -113,6 +114,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // 1. Rate Limiting Protection (Mencegah spam submit dan flooding skor)
+  const rateCheck = checkRateLimit(req, { keyPrefix: "lead-post", limit: 15, windowMs: 60000 });
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { success: false, error: `Terlalu banyak permintaan submit. Coba lagi dalam ${rateCheck.resetInSec} detik.` },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const parseResult = SubmissionSchema.safeParse(body);
@@ -125,6 +135,31 @@ export async function POST(req: NextRequest) {
     }
 
     const sub = parseResult.data;
+
+    // 2. Exam Integrity & Anti-Speedhack Defense
+    const integrity = validateExamSubmission({
+      totalQuestions: sub.totalQuestions,
+      totalCorrect: sub.totalCorrect,
+      durationSeconds: sub.durationSeconds,
+      score: sub.score,
+    });
+
+    if (!integrity.valid || integrity.isFlagged) {
+      const reasonMsg = integrity.reasons.join(". ");
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Integritas Ujian Ditolak: ${reasonMsg}. Percobaan ini tidak dapat dicatat ke papan peringkat resmi demi keadilan kompetisi.`,
+        },
+        { status: 422 }
+      );
+    }
+
+    // 3. XSS Sanitization pada nama & profil
+    const sanitizedName = sanitizeInput(sub.name);
+    const sanitizedSchool = sanitizeInput(sub.school || "SMK");
+    const sanitizedClass = sanitizeInput(sub.classGrade || "XII PPLG");
+
     const entries = await loadLeaderboard();
 
     // Cek apakah user sudah punya entri untuk paket ini
@@ -135,9 +170,9 @@ export async function POST(req: NextRequest) {
     const newEntry: LeaderboardEntry = {
       id: `lead-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       userId: sub.userId,
-      name: sub.name,
-      school: sub.school,
-      classGrade: sub.classGrade,
+      name: sanitizedName,
+      school: sanitizedSchool,
+      classGrade: sanitizedClass,
       score: sub.score,
       theta: sub.theta,
       totalQuestions: sub.totalQuestions,

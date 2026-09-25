@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getPracticeQuestion, getSimulationQuestions } from "@/lib/questionBank";
 import { getPackageById, TRYOUT_PACKAGES } from "@/lib/tryoutPackages";
 import { Question } from "@/types";
+import { checkRateLimit } from "@/lib/security";
 
 const RequestSchema = z.object({
   mode: z.enum(["practice", "simulation"]).default("practice"),
@@ -29,6 +30,25 @@ const QuestionSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // 1. Rate Limiting Defense (Mencegah DDoS & abuse token Groq)
+  const rateCheck = checkRateLimit(req, { keyPrefix: "ai-gen", limit: 30, windowMs: 60000 });
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Batas permintaan tercapai. Silakan coba lagi dalam ${rateCheck.resetInSec} detik.`,
+      },
+      {
+        status: 429,
+        headers: {
+          "Retry-After": rateCheck.resetInSec.toString(),
+          "X-RateLimit-Limit": "30",
+          "X-RateLimit-Remaining": "0",
+        },
+      }
+    );
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const parseResult = RequestSchema.safeParse(body);
