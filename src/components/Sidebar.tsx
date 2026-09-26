@@ -89,9 +89,9 @@ export function Sidebar({ children }: SidebarProps) {
   ];
 
   const sidebarContent = (
-    <div className="h-full flex flex-col justify-between bg-surface-container-lowest border-r border-outline-variant p-space-md select-none">
-      {/* Top Brand & Menu */}
-      <div className="space-y-space-lg">
+    <div className="h-full flex flex-col justify-between bg-surface-container-lowest border-r border-outline-variant select-none overflow-hidden">
+      {/* Scrollable Top Brand & Menu */}
+      <div className="flex-1 overflow-y-auto p-space-md space-y-space-md scrollbar-none">
         {/* Brand Logo Header */}
         <div className="flex items-center justify-between pb-space-xs border-b border-outline-variant/60">
           <Link href="/" className="flex items-center gap-space-xs group">
@@ -173,7 +173,7 @@ export function Sidebar({ children }: SidebarProps) {
       </div>
 
       {/* Bottom Profile, Theme & Logout */}
-      <div className="pt-space-sm border-t border-outline-variant/80 space-y-space-xs">
+      <div className="p-space-md pt-space-xs pb-5 border-t border-outline-variant/80 space-y-2 shrink-0 bg-surface-container-lowest">
         {/* Dark Mode Switcher */}
         <button
           type="button"

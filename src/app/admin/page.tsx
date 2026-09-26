@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Sidebar } from "@/components/Sidebar";
+import { AdminSidebar, AdminTab } from "@/components/AdminSidebar";
 import {
   Users,
   BookOpen,
@@ -85,17 +85,6 @@ import {
   UserRole,
 } from "@/types/admin";
 import { Attempt, Difficulty, Question, QuestionType } from "@/types";
-
-type AdminTab =
-  | "overview"
-  | "users"
-  | "questions"
-  | "curriculum"
-  | "monitoring"
-  | "security"
-  | "modules"
-  | "moderation"
-  | "settings";
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
@@ -561,99 +550,107 @@ export default function AdminPage() {
 
   if (isAuthenticated === null) {
     return (
-      <Sidebar>
-        <div className="flex-1 bg-surface p-margin lg:p-space-xl overflow-y-auto min-h-screen flex items-center justify-center">
-          <div className="text-center space-y-3">
-            <RefreshCw className="w-8 h-8 text-primary animate-spin mx-auto" />
-            <p className="text-body-sm text-on-surface-variant font-mono">Memverifikasi Hak Akses Sistem...</p>
-          </div>
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <RefreshCw className="w-8 h-8 text-primary animate-spin mx-auto" />
+          <p className="text-body-sm text-on-surface-variant font-mono">Memverifikasi Hak Akses Sistem...</p>
         </div>
-      </Sidebar>
+      </div>
     );
   }
 
   if (isAuthenticated === false) {
     return (
-      <Sidebar>
-        <div className="flex-1 bg-surface p-margin lg:p-space-xl overflow-y-auto min-h-screen flex items-center justify-center">
-          <div className="max-w-md w-full p-space-xl rounded-3xl bg-surface-container-lowest border border-outline-variant shadow-elevation-3 space-y-5 animate-fadeIn">
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto border border-amber-500/30 shadow-inner">
-                <Lock className="w-8 h-8" />
-              </div>
-              <h2 className="text-title-lg font-bold text-on-surface">Area Terproteksi: Masuk Admin</h2>
-              <p className="text-body-xs text-on-surface-variant leading-relaxed">
-                Portal Manajemen &amp; Pengawasan CBT-PPLG memerlukan otentikasi Master Passkey untuk mencegah akses tidak sah.
+      <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+        <div className="max-w-md w-full p-space-xl rounded-3xl bg-surface-container-lowest border border-outline-variant shadow-elevation-3 space-y-5 animate-fadeIn">
+          <div className="text-center space-y-2">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto border border-amber-500/30 shadow-inner">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h2 className="text-title-lg font-bold text-on-surface">Area Terproteksi: Masuk Admin</h2>
+            <p className="text-body-xs text-on-surface-variant leading-relaxed">
+              Portal Manajemen &amp; Pengawasan CBT-PPLG memerlukan otentikasi Master Passkey untuk mencegah akses tidak sah.
+            </p>
+          </div>
+
+          {lockoutSec > 0 ? (
+            <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-center space-y-1">
+              <AlertTriangle className="w-6 h-6 text-red-600 mx-auto" />
+              <h4 className="font-bold text-body-sm text-red-700">Akses Dikunci Sementara</h4>
+              <p className="text-[12px] text-red-600">
+                Terlalu banyak percobaan salah. Kunci keamanan terbuka kembali dalam <span className="font-mono font-bold">{lockoutSec} detik</span>.
               </p>
             </div>
-
-            {lockoutSec > 0 ? (
-              <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-center space-y-1">
-                <AlertTriangle className="w-6 h-6 text-red-600 mx-auto" />
-                <h4 className="font-bold text-body-sm text-red-700">Akses Dikunci Sementara</h4>
-                <p className="text-[12px] text-red-600">
-                  Terlalu banyak percobaan salah. Kunci keamanan terbuka kembali dalam <span className="font-mono font-bold">{lockoutSec} detik</span>.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handlePasskeySubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[12px] font-medium text-on-surface flex items-center justify-between">
-                    <span>Master Passkey Admin</span>
-                    <span className="text-[10px] font-mono text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">Terproteksi Kriptografi Server</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPasskey ? "text" : "password"}
-                      required
-                      value={passkeyInput}
-                      onChange={(e) => {
-                        setPasskeyInput(e.target.value);
-                        setPasskeyError(null);
-                      }}
-                      placeholder="Masukkan Master Passkey..."
-                      className="w-full px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant font-mono text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPasskey(!showPasskey)}
-                      className="absolute right-3 top-3 text-on-surface-variant hover:text-on-surface text-body-xs"
-                    >
-                      {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  {passkeyError && (
-                    <p className="text-[12px] text-red-600 flex items-center gap-1 mt-1 font-medium">
-                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                      <span>{passkeyError}</span>
-                    </p>
-                  )}
+          ) : (
+            <form onSubmit={handlePasskeySubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[12px] font-medium text-on-surface flex items-center justify-between">
+                  <span>Master Passkey Admin</span>
+                  <span className="text-[10px] font-mono text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">Terproteksi Kriptografi Server</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPasskey ? "text" : "password"}
+                    required
+                    value={passkeyInput}
+                    onChange={(e) => {
+                      setPasskeyInput(e.target.value);
+                      setPasskeyError(null);
+                    }}
+                    placeholder="Masukkan Master Passkey..."
+                    className="w-full px-4 py-3 rounded-xl bg-surface-container-low border border-outline-variant font-mono text-body-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasskey(!showPasskey)}
+                    className="absolute right-3 top-3 text-on-surface-variant hover:text-on-surface text-body-xs"
+                  >
+                    {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
+                {passkeyError && (
+                  <p className="text-[12px] text-red-600 flex items-center gap-1 mt-1 font-medium">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{passkeyError}</span>
+                  </p>
+                )}
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmittingPasskey || !passkeyInput}
-                  className="w-full py-3 rounded-xl bg-primary text-on-primary font-bold text-body-sm shadow-elevation-1 hover:bg-primary-container disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Buka Panel Admin</span>
-                </button>
-              </form>
-            )}
+              <button
+                type="submit"
+                disabled={isSubmittingPasskey || !passkeyInput}
+                className="w-full py-3 rounded-xl bg-primary text-on-primary font-bold text-body-sm shadow-elevation-1 hover:bg-primary-container disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>Buka Panel Admin</span>
+              </button>
+            </form>
+          )}
 
-            <div className="pt-2 border-t border-outline-variant text-center">
-              <a href="/" className="text-body-xs text-primary hover:underline font-medium">
-                &larr; Kembali ke Beranda Siswa
-              </a>
-            </div>
+          <div className="pt-2 border-t border-outline-variant text-center">
+            <a href="/" className="text-body-xs text-primary hover:underline font-medium">
+              &larr; Kembali ke Beranda Siswa
+            </a>
           </div>
         </div>
-      </Sidebar>
+      </div>
     );
   }
 
   return (
-    <Sidebar>
+    <AdminSidebar
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      usersCount={users.length}
+      questionsCount={questions.length}
+      moderationCount={moderationItems.filter((m) => m.status === "pending").length}
+      dbStatus={dbStatus}
+      onLockAdmin={() => {
+        logoutAdmin();
+        setIsAuthenticated(false);
+        showToast("Sesi Admin berhasil dikunci.");
+      }}
+    >
       <div className="flex-1 bg-surface p-margin lg:p-space-xl overflow-y-auto min-h-screen">
         <div className="max-w-7xl mx-auto space-y-space-md">
           {/* Toast Notification */}
@@ -2649,6 +2646,6 @@ export default function AdminPage() {
           )}
         </div>
       </div>
-    </Sidebar>
+    </AdminSidebar>
   );
 }
