@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { AITutorChat } from "@/components/AITutorChat";
 import { AuthGuard } from "@/components/AuthGuard";
 
 const poppins = Poppins({
@@ -45,7 +44,6 @@ export default function RootLayout({
         className={`${poppins.variable} ${jetbrainsMono.variable} font-sans bg-surface text-on-surface antialiased min-h-screen selection:bg-primary-fixed selection:text-on-primary-fixed`}
       >
         <AuthGuard>{children}</AuthGuard>
-        <AITutorChat />
       </body>
     </html>
   );

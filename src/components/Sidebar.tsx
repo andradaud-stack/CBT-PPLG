@@ -19,6 +19,7 @@ import {
   RotateCcw,
   Flame,
   Trophy,
+  Bot,
 } from "lucide-react";
 import { getUserProfile } from "@/lib/storage";
 import { getAuthSession, logoutUser } from "@/lib/auth";
@@ -82,6 +83,7 @@ export function Sidebar({ children }: SidebarProps) {
     { label: "Latihan Bebas", href: "/practice", icon: BookOpen },
     { label: "Simulasi TKA", href: "/simulation", icon: Clock },
     { label: "Bank Remedial", href: "/remedial", icon: RotateCcw },
+    { label: "Tanya AI Tutor", href: "/ai-tutor", icon: Bot, badge: "AI Pro" },
     { label: "Riwayat & Progres", href: "/history", icon: BarChart3 },
     { label: "Papan Peringkat", href: "/leaderboard", icon: Trophy },
     { label: "Profil Saya", href: "/profile", icon: User },
