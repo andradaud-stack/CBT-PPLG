@@ -50,6 +50,13 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    const validRole =
+      role === "teacher" || role === "guru"
+        ? "guru"
+        : role === "admin"
+        ? "admin"
+        : "siswa";
+
     await execute(
       `INSERT INTO \`users\` (\`id\`, \`name\`, \`email\`, \`password_hash\`, \`school\`, \`class_grade\`, \`role\`, \`latest_irt_score\`, \`is_active\`)
        VALUES (?, ?, ?, ?, ?, ?, ?, 0, TRUE)
@@ -61,11 +68,11 @@ export async function POST(req: NextRequest) {
       [
         id,
         name,
-        email,
+        email.trim().toLowerCase(),
         password_hash || "fallback_pass_hash_secure",
         school || "",
         classGrade || "",
-        role || "siswa",
+        validRole,
       ]
     );
 

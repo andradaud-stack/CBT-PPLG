@@ -40,7 +40,7 @@ import {
   KeyRound,
   Database,
 } from "lucide-react";
-import { getAuthSession } from "@/lib/auth";
+import { getAuthSession, syncLocalUsersToCloud } from "@/lib/auth";
 import {
   getAdminUsers,
   saveAdminUser,
@@ -277,6 +277,37 @@ export default function AdminPage() {
     setModules(getLearningModules());
     setModerationItems(getModerationQueue());
     setProctoringLogs(getProctoringLogs());
+
+    // 1. Sync akun lokal ke TiDB Cloud jika ada akun baru di perangkat ini
+    syncLocalUsersToCloud().catch(() => {});
+
+    // 2. Muat data user terbaru dari TiDB Serverless (termasuk user yang daftar lewat HP)
+    fetch("/api/admin/users")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.users)) {
+          setUsers((prev) => {
+            const mergedMap = new Map<string, AdminUserRecord>();
+            // Masukkan data lokal
+            prev.forEach((u) => mergedMap.set(u.email.toLowerCase(), u));
+            // Gabungkan data dari cloud TiDB
+            data.users.forEach((tu: AdminUserRecord) => {
+              const key = tu.email.toLowerCase();
+              if (mergedMap.has(key)) {
+                mergedMap.set(key, { ...mergedMap.get(key)!, ...tu });
+              } else {
+                mergedMap.set(key, {
+                  ...tu,
+                  role: tu.role || "student",
+                  status: tu.status || "active",
+                });
+              }
+            });
+            return Array.from(mergedMap.values());
+          });
+        }
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {

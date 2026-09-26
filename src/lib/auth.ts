@@ -136,6 +136,188 @@ export function clearAuthSession(): void {
   }
 }
 
+export async function syncLocalUsersToCloud(): Promise<void> {
+  if (!isClient()) return;
+  try {
+    const localUsers = getRegisteredUsers().filter(
+      (u) => u.email.toLowerCase() !== "admin@cbt-pplg.sch.id"
+    );
+    if (localUsers.length === 0) return;
+    const res = await fetch("/api/auth/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ users: localUsers }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        const current = getRegisteredUsers();
+        const mergedMap = new Map<string, RegisteredUser>();
+        current.forEach((u) => mergedMap.set(u.email.toLowerCase(), u));
+        data.users.forEach((cu: RegisteredUser) => {
+          const key = cu.email.toLowerCase();
+          if (mergedMap.has(key)) {
+            mergedMap.set(key, { ...mergedMap.get(key)!, ...cu });
+          } else {
+            mergedMap.set(key, cu);
+          }
+        });
+        saveRegisteredUsers(Array.from(mergedMap.values()));
+      }
+    }
+  } catch {
+    // Offline or network error
+  }
+}
+
+export async function getRegisteredUsersAsync(): Promise<RegisteredUser[]> {
+  const local = getRegisteredUsers();
+  if (!isClient()) return local;
+  try {
+    const res = await fetch("/api/auth/sync");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        const mergedMap = new Map<string, RegisteredUser>();
+        local.forEach((u) => mergedMap.set(u.email.toLowerCase(), u));
+        data.users.forEach((cu: RegisteredUser) => {
+          const key = cu.email.toLowerCase();
+          if (mergedMap.has(key)) {
+            mergedMap.set(key, { ...mergedMap.get(key)!, ...cu });
+          } else {
+            mergedMap.set(key, cu);
+          }
+        });
+        const merged = Array.from(mergedMap.values());
+        saveRegisteredUsers(merged);
+        return merged;
+      }
+    }
+  } catch {
+    // Return local
+  }
+  return local;
+}
+
+export async function loginUserAsync(
+  email: string,
+  password?: string
+): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // 1. Coba otentikasi via API TiDB Cloud
+  try {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: normalizedEmail, password }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.success && data.user) {
+      // Simpan akun ke cache lokal perangkat
+      const localUsers = getRegisteredUsers();
+      const idx = localUsers.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
+      if (idx >= 0) {
+        localUsers[idx] = { ...localUsers[idx], ...data.user };
+      } else {
+        localUsers.push({
+          ...data.user,
+          createdAt: new Date().toISOString(),
+        });
+      }
+      saveRegisteredUsers(localUsers);
+
+      // Simpan session
+      setAuthSession(data.user);
+      return { success: true, message: data.message || "Berhasil masuk.", user: data.user };
+    }
+
+    // Jika server merespon error otentikasi (kata sandi salah, akun dinonaktifkan, dll)
+    if (res.status === 401 || res.status === 403) {
+      return { success: false, message: data.message || "Kata sandi salah." };
+    }
+
+    // Jika 404 (email belum terdaftar di cloud), cek apakah ada di lokal (fallback)
+    if (res.status === 404) {
+      const localRes = loginUser(email, password);
+      if (localRes.success) {
+        // Segera sync ke cloud
+        syncLocalUsersToCloud().catch(() => {});
+        return localRes;
+      }
+      return {
+        success: false,
+        message: data.message || "Email belum terdaftar. Silakan lakukan pendaftaran akun baru pada tab 'Daftar Baru'.",
+      };
+    }
+  } catch (err) {
+    console.warn("Cloud login failed, falling back to local:", err);
+  }
+
+  // 2. Offline / local fallback
+  return loginUser(email, password);
+}
+
+export async function registerUserAsync(userData: {
+  name: string;
+  email: string;
+  school: string;
+  classGrade: string;
+  password?: string;
+}): Promise<{ success: boolean; message: string; user?: UserProfile }> {
+  const normalizedEmail = userData.email.trim().toLowerCase();
+
+  // 1. Coba simpan ke TiDB Cloud via API
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok && data.success && data.user) {
+      // Simpan ke local cache
+      const rawPassword = userData.password || "password123";
+      const hashedPassword = hashPassword(rawPassword);
+      const newUser: RegisteredUser = {
+        ...data.user,
+        password: hashedPassword,
+        createdAt: new Date().toISOString(),
+      };
+
+      const localUsers = getRegisteredUsers();
+      const existingIdx = localUsers.findIndex((u) => u.email.toLowerCase() === normalizedEmail);
+      if (existingIdx >= 0) {
+        localUsers[existingIdx] = newUser;
+      } else {
+        localUsers.push(newUser);
+      }
+      saveRegisteredUsers(localUsers);
+
+      setAuthSession(data.user);
+      return { success: true, message: data.message || "Pendaftaran berhasil!", user: data.user };
+    }
+
+    // Jika konflik 409 (email sudah ada di cloud)
+    if (res.status === 409) {
+      return { success: false, message: data.message || "Email sudah terdaftar. Silakan langsung masuk." };
+    }
+  } catch (err) {
+    console.warn("Cloud register failed, falling back to local:", err);
+  }
+
+  // 2. Fallback lokal
+  const localRes = registerUser(userData);
+  if (localRes.success) {
+    syncLocalUsersToCloud().catch(() => {});
+  }
+  return localRes;
+}
+
 export function loginUser(email: string, password?: string): { success: boolean; message: string; user?: UserProfile } {
   const users = getRegisteredUsers();
   const normalizedEmail = email.trim().toLowerCase();

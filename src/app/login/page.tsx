@@ -4,12 +4,20 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Sparkles, ArrowRight, Lock, Mail, User, School, BookOpen, AlertCircle, CheckCircle2 } from "lucide-react";
-import { DEMO_USERS, loginUser, registerUser, getRegisteredUsers } from "@/lib/auth";
+import {
+  DEMO_USERS,
+  loginUser,
+  loginUserAsync,
+  registerUserAsync,
+  getRegisteredUsers,
+  getRegisteredUsersAsync,
+  syncLocalUsersToCloud,
+} from "@/lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"login" | "register">("register");
-  const [hasUsers, setHasUsers] = useState(false);
+  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const [hasUsers, setHasUsers] = useState(true);
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
@@ -28,24 +36,32 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const users = getRegisteredUsers();
-    const count = users.length;
-    setHasUsers(count > 0);
-    if (count === 0) {
-      setActiveTab("register");
-    } else {
+    // 1. Cek lokal terlebih dahulu
+    const localUsers = getRegisteredUsers();
+    if (localUsers.length > 0) {
+      setHasUsers(true);
       setActiveTab("login");
     }
+
+    // 2. Sinkronisasi akun lokal ke TiDB Cloud jika belum ada di cloud
+    syncLocalUsersToCloud().catch(() => {});
+
+    // 3. Ambil daftar akun dari Cloud (TiDB) agar perangkat lain (HP) langsung mengenali akun
+    getRegisteredUsersAsync().then((users) => {
+      if (users.length > 0) {
+        setHasUsers(true);
+      }
+    }).catch(() => {});
   }, []);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsLoading(true);
 
     try {
-      const result = loginUser(loginEmail, loginPassword);
+      const result = await loginUserAsync(loginEmail, loginPassword);
       if (result.success) {
         setSuccessMsg("Berhasil masuk! Mengalihkan ke Dashboard...");
         setTimeout(() => {
@@ -62,14 +78,14 @@ export default function LoginPage() {
     }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsLoading(true);
 
     try {
-      const result = registerUser({
+      const result = await registerUserAsync({
         name: regName,
         email: regEmail,
         school: regSchool,
