@@ -8,13 +8,11 @@ import {
   BookOpen,
   Clock,
   BarChart3,
-  Palette,
   Sun,
   Moon,
   LogOut,
   Menu,
   X,
-  Sparkles,
   User,
   RotateCcw,
   Flame,
@@ -87,7 +85,6 @@ export function Sidebar({ children }: SidebarProps) {
     { label: "Riwayat & Progres", href: "/history", icon: BarChart3 },
     { label: "Papan Peringkat", href: "/leaderboard", icon: Trophy },
     { label: "Profil Saya", href: "/profile", icon: User },
-    { label: "Token Inspector", href: "/token-inspector", icon: Palette },
   ];
 
   const sidebarContent = (
@@ -160,17 +157,6 @@ export function Sidebar({ children }: SidebarProps) {
               );
             })}
           </nav>
-        </div>
-
-        {/* Info Badge */}
-        <div className="p-space-sm rounded-xl bg-tertiary-container/60 border border-primary/20 space-y-1">
-          <div className="flex items-center gap-1.5 text-primary text-[11px] font-semibold font-mono">
-            <Sparkles className="w-3.5 h-3.5 text-tertiary shrink-0" />
-            <span>AI Tutor Aktif</span>
-          </div>
-          <p className="text-[11px] text-on-tertiary-container leading-relaxed">
-            Terhubung ke AI Engine untuk evaluasi 5 Elemen Standar Kemendikdasmen.
-          </p>
         </div>
       </div>
 

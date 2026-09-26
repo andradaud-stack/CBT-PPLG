@@ -23,10 +23,7 @@ import {
   ChevronRight,
   RotateCcw,
   Trophy,
-  Bell,
 } from "lucide-react";
-import { getSystemAnnouncement } from "@/lib/adminStorage";
-import { SystemAnnouncement } from "@/types/admin";
 
 export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -35,8 +32,6 @@ export default function DashboardPage() {
   const [remedialCount, setRemedialCount] = useState(0);
   const [daysAway, setDaysAway] = useState(0);
 
-  const [announcement, setAnnouncement] = useState<SystemAnnouncement | null>(null);
-
   useEffect(() => {
     const session = getAuthSession();
     setProfile(session.user || getUserProfile());
@@ -44,7 +39,6 @@ export default function DashboardPage() {
     setAttempts(getAttempts());
     setRemedialCount(getRemedialQueue().length);
     setDaysAway(getDaysSinceLastActive());
-    setAnnouncement(getSystemAnnouncement());
     touchLastActiveTime();
   }, []);
 
@@ -59,27 +53,6 @@ export default function DashboardPage() {
   return (
     <Sidebar>
       <main className="max-w-6xl mx-auto px-margin py-space-lg space-y-space-md">
-        {/* Banner Pengumuman dari Pengawas / Admin */}
-        {announcement && announcement.enabled && (
-          <div
-            className={`p-space-md rounded-2xl border flex items-start gap-3 shadow-elevation-1 animate-fadeIn ${
-              announcement.type === "urgent"
-                ? "bg-red-500/10 border-red-500/30 text-red-900 dark:text-red-200"
-                : announcement.type === "warning"
-                ? "bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-200"
-                : announcement.type === "success"
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-900 dark:text-emerald-200"
-                : "bg-primary/10 border-primary/20 text-on-surface"
-            }`}
-          >
-            <Bell className="w-5 h-5 shrink-0 mt-0.5 text-primary" />
-            <div className="flex-1 text-body-sm">
-              <strong className="block text-title-sm mb-0.5">{announcement.title}</strong>
-              <p className="text-on-surface-variant leading-relaxed">{announcement.message}</p>
-            </div>
-          </div>
-        )}
-
         {/* Welcome Greeting & Summary */}
         <section className="flex flex-col md:flex-row md:items-center justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl border border-outline-variant shadow-elevation-1">
           <div>

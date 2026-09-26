@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { getAuthSession, updateUserProfile, logoutUser } from "@/lib/auth";
-import { getAttempts, getTopicProgress, getUserProfile, resetAllApplicationData } from "@/lib/storage";
+import { getAttempts, getTopicProgress, getUserProfile } from "@/lib/storage";
 import { UserProfile, Attempt, TopicProgress } from "@/types";
 import {
   User,
@@ -22,12 +22,10 @@ import {
   Award,
   BookOpen,
   LogOut,
-  Sparkles,
   ShieldCheck,
   ChevronRight,
   Target,
   Flame,
-  Trash2,
 } from "lucide-react";
 import { getLearningGoals, getExamCountdown } from "@/lib/targets";
 import { LearningGoals } from "@/types";
@@ -128,8 +126,6 @@ export default function ProfilePage() {
     }
   };
 
-  const [isResetting, setIsResetting] = useState(false);
-
   const handleResetToSaved = () => {
     if (profile) {
       setName(profile.name);
@@ -139,32 +135,6 @@ export default function ProfilePage() {
       setPassword("");
       setConfirmPassword("");
       setMessage(null);
-    }
-  };
-
-  const handleResetAllData = async () => {
-    const confirmed = window.confirm(
-      "PERINGATAN RESIK: Apakah Anda yakin ingin menghapus SEMUA data aplikasi (riwayat tryout, skor IRT, leaderboard, bookmark, antrean remedial, dan sesi lokal) ke kondisi awal sebelum deploy? Tindakan ini tidak dapat dibatalkan."
-    );
-    if (!confirmed) return;
-
-    setIsResetting(true);
-    try {
-      resetAllApplicationData();
-      await fetch("/api/leaderboard", { method: "DELETE" }).catch(() => {});
-      setMessage({
-        type: "success",
-        text: "Semua data aplikasi berhasil direset bersih ke kondisi awal pabrik.",
-      });
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
-    } catch {
-      setMessage({
-        type: "error",
-        text: "Gagal mereset data aplikasi.",
-      });
-      setIsResetting(false);
     }
   };
 
@@ -479,25 +449,6 @@ export default function ProfilePage() {
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-outline-variant text-body-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                   </div>
-                  {/* Preset Quick Badges */}
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {["XII PPLG 1", "XII PPLG 2", "XI PPLG 1", "XI PPLG 2", "XII RPL 1"].map(
-                      (preset) => (
-                        <button
-                          key={preset}
-                          type="button"
-                          onClick={() => setClassGrade(preset)}
-                          className={`text-[10px] font-mono px-2 py-0.5 rounded-md border transition-all ${
-                            classGrade === preset
-                              ? "bg-primary text-on-primary border-primary"
-                              : "bg-surface-container hover:bg-surface-container-high text-on-surface-variant border-outline-variant"
-                          }`}
-                        >
-                          {preset}
-                        </button>
-                      )
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -571,47 +522,6 @@ export default function ProfilePage() {
                 </button>
               </div>
             </form>
-          </div>
-
-          {/* Info Card: Standar Kurikulum PPLG */}
-          <div className="p-space-md rounded-2xl bg-tertiary-container/30 border border-primary/20 space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-body-sm">
-              <Sparkles className="w-4 h-4 text-tertiary" />
-              <span>Standar Pembelajaran & Uji Kompetensi PPLG 2026/2027</span>
-            </div>
-            <p className="text-body-xs text-on-surface-variant leading-relaxed">
-              Data profil Anda digunakan untuk mengkalkulasi rekomendasi materi belajar adaptif AI Tutor,
-              skor IRT parameter 2-PL, serta pencatatan kemajuan kelulusan pada 5 Elemen Utama
-              Kemendikdasmen: Wawasan Kerja, K3LH & Budaya Kerja, Jaringan Komputer, Pemrograman Terstruktur,
-              dan Pemrograman Berorientasi Objek.
-            </p>
-          </div>
-
-          {/* Zona Bahaya: Reset Seluruh Data (Persiapan Deploy) */}
-          <div className="p-space-md rounded-2xl bg-red-500/5 border border-red-500/20 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2 text-red-600 font-bold text-body-sm">
-                <Trash2 className="w-4 h-4 shrink-0" />
-                <span>Zona Bahaya: Reset Seluruh Data (Persiapan Deploy)</span>
-              </div>
-              <span className="text-[11px] font-mono text-red-600 font-semibold bg-red-500/10 px-2.5 py-0.5 rounded-full border border-red-500/20">
-                Fresh Clean Deploy
-              </span>
-            </div>
-            <p className="text-body-xs text-on-surface-variant leading-relaxed">
-              Gunakan fitur ini untuk membersihkan seluruh data pengujian lokal, riwayat pengerjaan tryout, skor IRT, leaderboard, akun sesi, dan antrean remedial agar aplikasi siap digunakan oleh peserta ujian asli saat dideploy.
-            </p>
-            <div className="pt-1 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={handleResetAllData}
-                disabled={isResetting}
-                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-body-xs shadow-elevation-1 transition-all flex items-center gap-2 disabled:opacity-50"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>{isResetting ? "Mereset Seluruh Data..." : "Reset Semua Data Sekarang"}</span>
-              </button>
-            </div>
           </div>
         </div>
       </div>

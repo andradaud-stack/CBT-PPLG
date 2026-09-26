@@ -578,35 +578,6 @@ export default function SimulationPage() {
               </div>
             </div>
 
-            {/* CBT Anti-Cheat & Strict Proctoring Enforced Banner */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-emerald-500/10 via-primary/5 to-surface-container-lowest p-space-md shadow-elevation-1 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div className="flex items-start gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 shadow-elevation-1 bg-emerald-600 text-white">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-title-md text-on-surface">
-                      Mode Pengawasan Ujian Otomatis (CBT Strict Proctoring)
-                    </h3>
-                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full font-bold uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                      <Lock className="w-3 h-3" />
-                      Wajib Aktif (Terkunci Otomatis)
-                    </span>
-                  </div>
-                  <p className="text-body-xs text-on-surface-variant mt-1 leading-relaxed max-w-2xl">
-                    Sistem <strong>otomatis mengunci mode layar penuh (*fullscreen*)</strong> saat ujian dimulai, mencatat deteksi perpindahan tab browser / Alt+Tab / trackpad gesture (maks. 3 peringatan sebelum auto-submit), serta memblokir shortcut inspeksi &amp; copy-paste demi integritas ujian.
-                  </p>
-                </div>
-              </div>
-
-              {/* Status Enforced Indicator (Terkunci Otomatis & Terverifikasi) */}
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold text-body-sm shadow-elevation-1 shrink-0">
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>Pengawasan Otomatis Terkunci</span>
-              </div>
-            </div>
-
             {/* Filter Tabs */}
             <div className="flex items-center justify-between flex-wrap gap-space-sm">
               <div className="flex items-center gap-1.5 p-1 rounded-xl bg-surface-container border border-outline-variant">

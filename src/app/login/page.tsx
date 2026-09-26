@@ -3,7 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, ArrowRight, Lock, Mail, User, School, BookOpen, AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  ArrowRight,
+  Lock,
+  Mail,
+  User,
+  School,
+  BookOpen,
+  AlertCircle,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import {
   DEMO_USERS,
   loginUser,
@@ -22,6 +33,7 @@ export default function LoginPage() {
   // Login form state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Register form state
   const [regName, setRegName] = useState("");
@@ -29,6 +41,7 @@ export default function LoginPage() {
   const [regSchool, setRegSchool] = useState("");
   const [regClass, setRegClass] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
   // Feedback states
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -145,12 +158,8 @@ export default function LoginPage() {
       {/* Main Authentication Card */}
       <main className="max-w-md mx-auto w-full my-auto animate-fadeIn">
         <div className="bg-surface-container-lowest rounded-2xl border border-outline-variant p-space-lg md:p-space-xl shadow-elevation-2 space-y-space-md">
-          {/* Header pill */}
+          {/* Header */}
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-tertiary-container text-on-tertiary-container border border-primary/20 text-label-sm font-mono mb-space-xs">
-              <Sparkles className="w-3.5 h-3.5 text-tertiary" />
-              <span>Standar CBT Kemendikdasmen</span>
-            </div>
             <h1 className="text-headline-lg font-bold text-on-surface tracking-tight">
               {activeTab === "login" ? "Masuk Ruang Ujian" : "Daftar Akun Siswa"}
             </h1>
@@ -237,16 +246,25 @@ export default function LoginPage() {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-on-surface-variant absolute left-3 top-3" />
                   <input
-                    type="password"
+                    type={showLoginPassword ? "text" : "password"}
                     required
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-9 pr-space-md py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-sans"
+                    className="w-full pl-9 pr-10 py-2 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface text-body-md focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-sans"
                   />
-                </div>
-                <div className="flex items-center justify-between mt-1 text-[11px] font-mono text-on-surface-variant">
-                  <span>Demo default: password123</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface transition-colors p-0.5"
+                    aria-label={showLoginPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                  >
+                    {showLoginPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -341,13 +359,25 @@ export default function LoginPage() {
                 <div className="relative">
                   <Lock className="w-4 h-4 text-on-surface-variant absolute left-3 top-2.5" />
                   <input
-                    type="password"
+                    type={showRegPassword ? "text" : "password"}
                     required
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="Minimal 6 karakter"
-                    className="w-full pl-9 pr-space-md py-1.5 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-sans"
+                    className="w-full pl-9 pr-10 py-1.5 rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-sans"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    className="absolute right-3 top-2 text-on-surface-variant hover:text-on-surface transition-colors p-0.5"
+                    aria-label={showRegPassword ? "Sembunyikan kata sandi" : "Lihat kata sandi"}
+                  >
+                    {showRegPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -401,17 +431,6 @@ export default function LoginPage() {
               </p>
             </div>
           )}
-
-          {/* Admin Portal Direct Link */}
-          <div className="pt-space-xs border-t border-outline-variant text-center">
-            <Link
-              href="/admin"
-              className="text-[12px] font-mono text-on-surface-variant hover:text-primary transition-colors flex items-center justify-center gap-1.5"
-            >
-              <Lock className="w-3.5 h-3.5 text-amber-500" />
-              <span>Akses Portal Admin &amp; Pengawas</span>
-            </Link>
-          </div>
         </div>
       </main>
 
