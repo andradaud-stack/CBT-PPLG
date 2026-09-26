@@ -146,18 +146,57 @@ function isClient(): boolean {
 // ==========================================
 // 1. MANAJEMEN PENGGUNA (STUDENTS & USERS)
 // ==========================================
+const DELETED_USERS_KEY = "cbt_pplg_deleted_user_ids";
+
+function getDeletedUserIds(): Set<string> {
+  if (!isClient()) return new Set();
+  try {
+    const raw = localStorage.getItem(DELETED_USERS_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function markUserAsDeleted(idOrEmail: string): void {
+  if (!isClient()) return;
+  try {
+    const deleted = getDeletedUserIds();
+    deleted.add(idOrEmail);
+    localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(Array.from(deleted)));
+  } catch (err) {
+    console.error("Error marking user as deleted:", err);
+  }
+}
+
+function unmarkUserAsDeleted(idOrEmail: string): void {
+  if (!isClient()) return;
+  try {
+    const deleted = getDeletedUserIds();
+    deleted.delete(idOrEmail);
+    localStorage.setItem(DELETED_USERS_KEY, JSON.stringify(Array.from(deleted)));
+  } catch (err) {
+    console.error("Error unmarking user as deleted:", err);
+  }
+}
+
 export function getAdminUsers(): AdminUserRecord[] {
   if (!isClient()) return [];
   const registered = getRegisteredUsers();
   const attempts = getAttempts();
+  const deletedSet = getDeletedUserIds();
 
   // Gabungkan dengan data sesi jika belum ada
   const current = getUserProfile();
   const allUsersMap = new Map<string, AdminUserRecord>();
 
-  // Masukkan registered users
+  // Masukkan registered users (lewati yang sudah dihapus)
   registered.forEach((u) => {
-    allUsersMap.set(u.id || u.email, {
+    const key = u.id || u.email;
+    if (deletedSet.has(u.id) || deletedSet.has(u.email) || deletedSet.has(key)) {
+      return;
+    }
+    allUsersMap.set(key, {
       ...u,
       role: (u as AdminUserRecord).role || (u.email.includes("admin") || u.email.includes("guru") ? "teacher" : "student"),
       status: (u as AdminUserRecord).status || "active",
@@ -165,10 +204,10 @@ export function getAdminUsers(): AdminUserRecord[] {
     });
   });
 
-  // Masukkan current profile jika belum masuk
+  // Masukkan current profile jika belum masuk dan TIDAK dalam daftar yang dihapus
   if (current.id || current.email) {
     const key = current.id || current.email;
-    if (!allUsersMap.has(key)) {
+    if (!deletedSet.has(current.id) && !deletedSet.has(current.email) && !deletedSet.has(key) && !allUsersMap.has(key)) {
       allUsersMap.set(key, {
         ...current,
         role: "student",
@@ -199,6 +238,9 @@ export function getAdminUsers(): AdminUserRecord[] {
 
 export function saveAdminUser(user: AdminUserRecord): void {
   if (!isClient()) return;
+  unmarkUserAsDeleted(user.id);
+  if (user.email) unmarkUserAsDeleted(user.email);
+
   const users = getRegisteredUsers();
   const index = users.findIndex((u) => u.id === user.id || u.email === user.email);
   if (index >= 0) {
@@ -207,13 +249,46 @@ export function saveAdminUser(user: AdminUserRecord): void {
     users.unshift(user);
   }
   saveRegisteredUsers(users);
+
+  // Sync ke database TiDB Cloud di background
+  try {
+    fetch("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(user),
+    }).catch(() => {});
+  } catch {
+    // Offline fallback
+  }
+
   window.dispatchEvent(new Event("cendekia:users-updated"));
 }
 
 export function deleteAdminUser(userId: string): void {
   if (!isClient()) return;
-  const users = getRegisteredUsers().filter((u) => u.id !== userId);
+  // 1. Tandai ID agar tidak dimunculkan lagi oleh storage profile
+  markUserAsDeleted(userId);
+
+  // 2. Hapus dari daftar akun terdaftar lokal
+  const users = getRegisteredUsers().filter((u) => u.id !== userId && u.email !== userId);
   saveRegisteredUsers(users);
+
+  // 3. Jika user yang dihapus adalah user yang sedang login di sesi lokal, bersihkan sesi
+  const current = getUserProfile();
+  if (current.id === userId || current.email === userId) {
+    localStorage.removeItem("cendekia_user_profile");
+    localStorage.removeItem("cbt_pplg_session");
+  }
+
+  // 4. Hapus dari database TiDB Serverless via API backend
+  try {
+    fetch(`/api/admin/users?id=${encodeURIComponent(userId)}`, {
+      method: "DELETE",
+    }).catch(() => {});
+  } catch {
+    // Local offline fallback
+  }
+
   window.dispatchEvent(new Event("cendekia:users-updated"));
 }
 

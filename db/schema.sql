@@ -140,9 +140,9 @@ VALUES (
   'SMK Pusat Keunggulan PPLG',
   'Admin',
   'admin',
-  800,
+  0,
   TRUE
-) ON DUPLICATE KEY UPDATE `email` = VALUES(`email`);
+) ON DUPLICATE KEY UPDATE `email` = VALUES(`email`), `latest_irt_score` = VALUES(`latest_irt_score`);
 
 -- Seed Default Konfigurasi Simulasi
 INSERT INTO `system_configs` (`config_key`, `config_value`)

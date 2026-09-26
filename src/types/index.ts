@@ -139,6 +139,7 @@ export interface UserProfile {
   school: string;
   classGrade: string;
   latestIrtScore: number;
+  role?: string;
 }
 
 export interface RemedialQuestion {

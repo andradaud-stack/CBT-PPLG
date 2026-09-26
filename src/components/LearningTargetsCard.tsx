@@ -85,12 +85,14 @@ export function LearningTargetsCard({ profile }: LearningTargetsCardProps) {
 
   const handleSaveGoals = (e: React.FormEvent) => {
     e.preventDefault();
-    updateLearningGoals({
-      targetIrtScore: targetIrt,
-      dailyQuestionsGoal: dailyQuestions,
-      weeklySimulationsGoal: weeklySimulations,
+    const updated = updateLearningGoals({
+      targetIrtScore: Number(targetIrt),
+      dailyQuestionsGoal: Number(dailyQuestions),
+      weeklySimulationsGoal: Number(weeklySimulations),
       examDate: examDate || goals.examDate,
     });
+    setGoals(updated);
+    setMilestones(calculateMilestones(updated));
     setIsEditModalOpen(false);
   };
 
@@ -150,7 +152,13 @@ export function LearningTargetsCard({ profile }: LearningTargetsCardProps) {
 
             <button
               type="button"
-              onClick={() => setIsEditModalOpen(true)}
+              onClick={() => {
+                setTargetIrt(goals.targetIrtScore);
+                setDailyQuestions(goals.dailyQuestionsGoal);
+                setWeeklySimulations(goals.weeklySimulationsGoal);
+                setExamDate(goals.examDate);
+                setIsEditModalOpen(true);
+              }}
               className="px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary text-body-xs font-semibold border border-primary/20 flex items-center gap-1.5 transition-all shadow-elevation-1 active:scale-95"
             >
               <Settings2 className="w-3.5 h-3.5" />
@@ -173,33 +181,48 @@ export function LearningTargetsCard({ profile }: LearningTargetsCardProps) {
 
               <div className="mt-2 flex items-baseline gap-1.5">
                 <span className="font-mono text-headline-md font-bold text-on-surface">
-                  {currentScore}
+                  {currentScore > 0 ? currentScore : 0}
                 </span>
                 <span className="font-mono text-body-sm text-on-surface-variant">
                   / {goals.targetIrtScore}
                 </span>
+                {currentScore === 0 && (
+                  <span className="ml-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">
+                    Belum Ujian
+                  </span>
+                )}
               </div>
 
               <div className="mt-2.5 space-y-1">
                 <div className="h-2 w-full rounded-full bg-outline-variant overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-700 ${
-                      currentScore >= goals.targetIrtScore
+                      currentScore === 0
+                        ? "bg-transparent"
+                        : currentScore >= goals.targetIrtScore
                         ? "bg-success"
                         : "bg-gradient-to-r from-primary to-tertiary"
                     }`}
-                    style={{ width: `${Math.max(4, scoreProgress)}%` }}
+                    style={{ width: `${currentScore === 0 ? 0 : Math.max(4, scoreProgress)}%` }}
                   />
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-mono text-on-surface-variant">
-                  <span>{scoreProgress}% Tercapai</span>
-                  <span>{currentScore >= goals.targetIrtScore ? "🎉 Target Tembus!" : `Kurang ${scoreDiff} poin`}</span>
+                  <span>{currentScore === 0 ? "0% Tercapai" : `${scoreProgress}% Tercapai`}</span>
+                  <span>
+                    {currentScore === 0
+                      ? `Target: ${goals.targetIrtScore} IRT`
+                      : currentScore >= goals.targetIrtScore
+                      ? "🎉 Target Tembus!"
+                      : `Kurang ${scoreDiff} poin`}
+                  </span>
                 </div>
               </div>
             </div>
 
             <p className="mt-3 text-[11px] text-on-surface-variant leading-tight">
-              {currentScore >= goals.targetIrtScore
+              {currentScore === 0
+                ? "Target kelulusan siap. Yuk ikuti simulasi pertama untuk mengukur skor IRT kamu!"
+                : currentScore >= goals.targetIrtScore
                 ? "Luar biasa! Skor simulasi kamu sudah melampaui target."
                 : "Tingkatkan akurasi di soal kategori Sedang & Sulit."}
             </p>
@@ -410,15 +433,31 @@ export function LearningTargetsCard({ profile }: LearningTargetsCardProps) {
                   <span>Target Skor IRT (Skala 200–800)</span>
                   <span className="font-mono text-primary font-bold">{targetIrt} IRT</span>
                 </label>
-                <input
-                  type="range"
-                  min="400"
-                  max="800"
-                  step="10"
-                  value={targetIrt}
-                  onChange={(e) => setTargetIrt(Number(e.target.value))}
-                  className="w-full accent-primary cursor-pointer"
-                />
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="400"
+                    max="800"
+                    step="10"
+                    value={targetIrt}
+                    onChange={(e) => setTargetIrt(Number(e.target.value))}
+                    className="flex-1 accent-primary cursor-pointer"
+                  />
+                  <div className="w-28 shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container border border-outline-variant font-mono">
+                    <input
+                      type="number"
+                      min="200"
+                      max="800"
+                      value={targetIrt}
+                      onChange={(e) => {
+                        const val = Number(e.target.value) || 0;
+                        setTargetIrt(val);
+                      }}
+                      className="w-full bg-transparent text-right font-bold text-primary focus:outline-none"
+                    />
+                    <span className="text-[11px] text-on-surface-variant font-medium">IRT</span>
+                  </div>
+                </div>
                 <div className="flex justify-between gap-1 text-[11px] font-mono text-on-surface-variant">
                   <button
                     type="button"

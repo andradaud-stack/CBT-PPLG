@@ -18,7 +18,7 @@ export const OFFICIAL_ADMIN_USER: RegisteredUser = {
   email: "admin@cbt-pplg.sch.id",
   school: "SMK Pusat Keunggulan PPLG",
   classGrade: "Ruang Kontrol & Server",
-  latestIrtScore: 800,
+  latestIrtScore: 0,
   // Pre-hashed with salted SHA-256 (Original password is never exposed in git)
   password: "b480adeda7ecc89d8f363388bec995bc9b7dcba21f3a00ca1a3e2d7d9e072b73",
   createdAt: "2026-09-01T00:00:00.000Z",
@@ -53,8 +53,14 @@ export function getRegisteredUsers(): RegisteredUser[] {
       cleaned.unshift(OFFICIAL_ADMIN_USER);
     } else {
       const adminIdx = cleaned.findIndex((u) => u.email.toLowerCase() === "admin@cbt-pplg.sch.id");
-      if (adminIdx !== -1 && cleaned[adminIdx].password !== OFFICIAL_ADMIN_USER.password) {
-        cleaned[adminIdx].password = OFFICIAL_ADMIN_USER.password;
+      if (adminIdx !== -1) {
+        if (cleaned[adminIdx].password !== OFFICIAL_ADMIN_USER.password) {
+          cleaned[adminIdx].password = OFFICIAL_ADMIN_USER.password;
+        }
+        // Bersihkan skor lama 800 yang dulu ter-seed tidak sengaja
+        if (cleaned[adminIdx].latestIrtScore === 800) {
+          cleaned[adminIdx].latestIrtScore = 0;
+        }
       }
     }
 
@@ -92,6 +98,11 @@ export function getAuthSession(): { isLoggedIn: boolean; user: UserProfile | nul
     ) {
       localStorage.removeItem(AUTH_STORAGE_KEYS.SESSION);
       return { isLoggedIn: false, user: null };
+    }
+    if (session && session.user && session.user.latestIrtScore === 800) {
+      session.user.latestIrtScore = 0;
+      localStorage.setItem(AUTH_STORAGE_KEYS.SESSION, JSON.stringify(session));
+      saveUserProfile(session.user);
     }
     return session && session.isLoggedIn ? session : { isLoggedIn: false, user: null };
   } catch {

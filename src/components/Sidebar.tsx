@@ -19,7 +19,6 @@ import {
   RotateCcw,
   Flame,
   Trophy,
-  ShieldCheck,
 } from "lucide-react";
 import { getUserProfile } from "@/lib/storage";
 import { getAuthSession, logoutUser } from "@/lib/auth";
@@ -85,7 +84,6 @@ export function Sidebar({ children }: SidebarProps) {
     { label: "Bank Remedial", href: "/remedial", icon: RotateCcw },
     { label: "Riwayat & Progres", href: "/history", icon: BarChart3 },
     { label: "Papan Peringkat", href: "/leaderboard", icon: Trophy },
-    { label: "Portal Admin & Guru", href: "/admin", icon: ShieldCheck, badge: "Admin" },
     { label: "Profil Saya", href: "/profile", icon: User },
     { label: "Token Inspector", href: "/token-inspector", icon: Palette },
   ];
