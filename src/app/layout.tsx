@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthGuard } from "@/components/AuthGuard";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
         className={`${poppins.variable} ${jetbrainsMono.variable} font-sans bg-surface text-on-surface antialiased min-h-screen selection:bg-primary-fixed selection:text-on-primary-fixed`}
       >
         <AuthGuard>{children}</AuthGuard>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
