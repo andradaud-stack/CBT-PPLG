@@ -72,14 +72,15 @@ export const OFFICIAL_AUTHENTIC_QUESTIONS: Question[] = [
     type: "multiple",
     stem: "Perhatikan potongan program Python berikut:\n\n```python\nnilai = [70, 85, 60, 90]\n\njumlah_lulus = 0\n\nfor n in nilai:\n    if n >= 75:\n        jumlah_lulus += 1\n\nprint(jumlah_lulus)\n```\n\nTentukan pernyataan yang BENAR berdasarkan program di atas! (Pilih lebih dari satu jawaban yang benar)",
     options: [
-      { key: "A", text: "Perulangan digunakan untuk memeriksa setiap nilai dalam daftar nilai." },
-      { key: "B", text: "Nilai 75 masuk kategori Lulus" },
-      { key: "C", text: "Pada akhir program, isi variabel jumlah_lulus adalah 3" },
-      { key: "D", text: "Nilai yang memenuhi kriteria lulus (>= 75) dalam list adalah 85 dan 90 sehingga jumlah_lulus bernilai 2" },
+      { key: "A", text: "Perulangan for digunakan untuk mengiterasi setiap elemen di dalam list nilai secara sekuensial" },
+      { key: "B", text: "Nilai 75 memenuhi syarat kelulusan karena kondisi menggunakan operator relasional lebih besar atau sama dengan" },
+      { key: "C", text: "Pada akhir eksekusi program, isi variabel jumlah_lulus bernilai 3 karena ada 3 elemen di atas nilai 60" },
+      { key: "D", text: "Elemen yang memenuhi kriteria kelulusan adalah 85 dan 90 sehingga nilai akhir jumlah_lulus adalah 2" },
+      { key: "E", text: "Nilai variabel jumlah_lulus akan bertambah 1 setiap kali iterasi menemukan angka yang kurang dari 75" },
     ],
     correctAnswer: ["A", "B", "D"],
     explanation:
-      "- **Pernyataan A Benar:** Perulangan `for n in nilai:` berfungsi mengiterasi setiap elemen di dalam list `nilai` secara sekuensial.\n- **Pernyataan B Benar:** Operator perbandingan `>=` berarti lebih besar atau sama dengan. Maka jika ada nilai 75, nilai tersebut memenuhi kriteria dan masuk kategori Lulus.\n- **Pernyataan C Salah:** Elemen yang memenuhi `>= 75` hanya dua elemen, yaitu 85 dan 90. Nilai 70 dan 60 tidak memenuhi. Maka variabel `jumlah_lulus` berakhir dengan nilai 2, bukan 3.\n- **Pernyataan D Benar:** Menjelaskan secara presisi alasan mengapa hasil akhirnya adalah 2.",
+      "- **Pernyataan A Benar:** Perulangan `for n in nilai:` berfungsi mengiterasi setiap elemen di dalam list `nilai` secara sekuensial.\n- **Pernyataan B Benar:** Operator perbandingan `>=` berarti lebih besar atau sama dengan. Maka jika ada nilai 75, nilai tersebut memenuhi kriteria dan masuk kategori Lulus.\n- **Pernyataan C Salah:** Elemen yang memenuhi `>= 75` hanya dua elemen, yaitu 85 dan 90. Nilai 70 dan 60 tidak memenuhi. Maka variabel `jumlah_lulus` berakhir dengan nilai 2, bukan 3.\n- **Pernyataan D Benar:** Elemen yang memenuhi kriteria hanya 85 dan 90 sehingga `jumlah_lulus` bernilai 2.\n- **Pernyataan E Salah:** Percabangan hanya menambah counter saat nilai `>= 75`, bukan saat kurang dari 75.",
   },
   {
     id: "resmi-05",

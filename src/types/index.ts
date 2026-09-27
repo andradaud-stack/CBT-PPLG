@@ -1,6 +1,6 @@
 export type Difficulty = "mudah" | "sedang" | "sulit";
 
-export type QuestionType = "single" | "multiple";
+export type QuestionType = "single" | "multiple" | "boolean";
 
 export type PPLGTopic =
   | "Pemrograman Dasar"

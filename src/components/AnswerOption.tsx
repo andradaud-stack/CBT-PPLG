@@ -55,13 +55,13 @@ export function AnswerOption({
         isDisabled ? "cursor-default" : ""
       } ${containerStyles}`}
     >
-      {/* Indicator Pill: Circle for single, square with rounded-sm for multiple */}
+      {/* Indicator Pill: Circle for single, square for multiple, check/cross for boolean */}
       <span
         className={`w-8 h-8 ${
           type === "multiple" ? "rounded-md" : "rounded-full"
         } flex items-center justify-center font-mono text-label-md shrink-0 transition-colors ${pillStyles}`}
       >
-        {optionKey}
+        {type === "boolean" ? (optionKey === "A" ? "✓" : "✗") : optionKey}
       </span>
 
       {/* Option Text */}

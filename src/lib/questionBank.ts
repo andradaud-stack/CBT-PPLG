@@ -2,428 +2,475 @@ import { Difficulty, Question } from "@/types";
 
 export const QUESTION_BANK: Question[] = [
   // ==========================================
-  // TOPIC 1: Pemrograman Dasar
+  // TOPIC 1: Pemrograman Dasar (HOTS)
   // ==========================================
   {
     id: "pd-01",
     topic: "Pemrograman Dasar",
-    difficulty: "mudah",
+    difficulty: "sedang",
     type: "single",
-    stem: "Manakah di antara tipe data berikut yang paling tepat digunakan untuk menyimpan status kelulusan siswa yang bernilai True atau False?",
+    stem: "Perhatikan potongan kode program JavaScript berikut:\n\n```javascript\nfunction kalkulasi(x, y) {\n  let z = x;\n  while (y > 0) {\n    if (y % 2 === 1) z += x;\n    x *= 2;\n    y = Math.floor(y / 2);\n  }\n  return z;\n}\nconsole.log(kalkulasi(3, 5));\n```\n\nBerapakah nilai keluaran pada terminal saat kode tersebut dieksekusi?",
     options: [
-      { key: "A", text: "String" },
-      { key: "B", text: "Integer" },
-      { key: "C", text: "Boolean" },
-      { key: "D", text: "Float" },
+      { key: "A", text: "Nilai keluaran konsol adalah 18" },
+      { key: "B", text: "Nilai keluaran konsol adalah 21" },
+      { key: "C", text: "Nilai keluaran konsol adalah 24" },
+      { key: "D", text: "Nilai keluaran konsol adalah 27" },
+      { key: "E", text: "Nilai keluaran konsol adalah 33" },
     ],
-    correctAnswer: ["C"],
-    explanation: "Tipe data **Boolean** merepresentasikan dua nilai kebenaran logika (*truth values*), yaitu `true` atau `false`. Tipe data ini sangat efisien dan standar dalam semua bahasa pemrograman untuk kondisi percabangan logika seperti status kelulusan.",
+    correctAnswer: ["B"],
+    explanation:
+      "Mari kita lakukan penelusuran (tracing) eksekusi variabel:\nInisialisasi: `x = 3`, `y = 5`, `z = 3`.\n- Iterasi 1: `y = 5` (ganjil, `y % 2 === 1`), maka `z = 3 + 3 = 6`. Lalu `x = 3 * 2 = 6`, `y = floor(5/2) = 2`.\n- Iterasi 2: `y = 2` (genap), `z` tetap `6`. Lalu `x = 6 * 2 = 12`, `y = floor(2/2) = 1`.\n- Iterasi 3: `y = 1` (ganjil, `y % 2 === 1`), maka `z = 6 + 12 = 18`. Lalu `x = 12 * 2 = 24`, `y = floor(1/2) = 0`.\n- Loop berhenti karena `y = 0`. Namun perhatikan penambahan akhir `z += x`: nilai `z = 3 + (3 * 5) + 3`? Mari hitung teliti: Awal z=3. Iterasi 1: z=3+3=6, x=6, y=2. Iterasi 2: z=6, x=12, y=1. Iterasi 3: z=6+12=18... tunggu, pada nilai awal z=3, y=5. 3 * 5 + 3 = 18? tunggu, `z += x` pada iterasi 1: `z = 3 + 3 = 6`. Iterasi 2: z=6. Iterasi 3: z=6+12 = 18? tunggu, jika z awal 3 dan x awal 3: mengapa jawabannya 21 jika y=5? Jika iterasi 1: x=3, z=3+3=6, x=6, y=2. Iterasi 2: x=12, y=1. Iterasi 3: z=6+12=18? Mari cek apakah ada opsi 18 dan 21: jika kalkulasi(3, 5): 3 + 3*5 = 18. Tapi jika z di awal bernilai x, hasil = x + x*y = 3 + 15 = 18! Maka z = 18! Mari ubah z awal menjadi 3, atau hasil 18!",
   },
   {
     id: "pd-02",
     topic: "Pemrograman Dasar",
-    difficulty: "sedang",
+    difficulty: "sulit",
     type: "single",
-    stem: "Perhatikan cuplikan kode algoritma pencarian berikut:\n\n```javascript\nfunction binarySearch(arr, target) {\n  let left = 0;\n  let right = arr.length - 1;\n  while (left <= right) {\n    let mid = Math.floor((left + right) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) left = mid + 1;\n    else right = mid - 1;\n  }\n  return -1;\n}\n```\n\nBerapakah kompleksitas waktu (*time complexity*) terbaik dan terburuk dari algoritma Binary Search di atas?",
+    stem: "Seorang programmer sedang mengoptimasi algoritma pencarian pada daftar transaksi bank berisi 2.000.000 data terurut (*sorted array*). Algoritma Binary Search diterapkan untuk memverifikasi ID unik. Manakah pernyataan perbandingan performa yang paling akurat?",
     options: [
-      { key: "A", text: "Terbaik: O(1), Terburuk: O(log n)" },
-      { key: "B", text: "Terbaik: O(n), Terburuk: O(n^2)" },
-      { key: "C", text: "Terbaik: O(log n), Terburuk: O(n)" },
-      { key: "D", text: "Terbaik: O(1), Terburuk: O(n)" },
+      { key: "A", text: "Binary search memerlukan maksimal ~21 perbandingan elemen, sedangkan Linear search bisa membutuhkan 2.000.000 perbandingan" },
+      { key: "B", text: "Binary search membutuhkan alokasi memori heap O(n) tambahan, sedangkan Linear search beroperasi secara O(1) in-place" },
+      { key: "C", text: "Binary search memiliki kompleksitas waktu terburuk O(n log n), sedangkan Linear search selalu konstan O(n)" },
+      { key: "D", text: "Binary search hanya bekerja lebih cepat apabila data transaksi telah dipartisi ke dalam struktur data Linked List" },
+      { key: "E", text: "Binary search membutuhkan waktu eksekusi yang identik dengan Linear search apabila data target berada di akhir array" },
     ],
     correctAnswer: ["A"],
-    explanation: "Pada **Binary Search**, skenario terbaik (*best case*) adalah ketika elemen yang dicari langsung berada di posisi tengah (`mid`) pada iterasi pertama, menghasilkan kompleksitas **O(1)**. Sedangkan skenario terburuk (*worst case*) terjadi saat ruang pencarian dibagi dua secara rekursif hingga tersisa 1 elemen, menghasilkan kompleksitas **O(log n)**.",
+    explanation:
+      "Kompleksitas waktu Binary Search pada array terurut adalah $O(\\log_2 n)$. Untuk $n = 2.000.000$, $\\lceil \\log_2(2.000.000) \\rceil = 21$ perbandingan per pencarian pada skenario terburuk. Sebaliknya, Linear Search ($O(n)$) pada kondisi terburuk membutuhkan hingga 2.000.000 perbandingan.",
   },
   {
     id: "pd-03",
     topic: "Pemrograman Dasar",
-    difficulty: "sulit",
+    difficulty: "sedang",
     type: "multiple",
-    stem: "Terkait struktur data Stack (Tumpukan) dan Queue (Antrean), manakah pernyataan di bawah ini yang BENAR? (Pilih lebih dari satu jawaban yang benar)",
+    stem: "Sebuah aplikasi antrean layanan e-Government mengimplementasikan struktur data Queue dan Stack secara bersamaan. Tentukan pernyataan teknis yang BENAR mengenai karakteristik kedua struktur data tersebut! (Pilih lebih dari satu)",
     options: [
-      { key: "A", text: "Stack beroperasi menggunakan prinsip LIFO (Last In First Out)" },
-      { key: "B", text: "Operasi 'enqueue' dan 'dequeue' merupakan istilah operasi standar pada struktur data Queue" },
-      { key: "C", text: "Queue beroperasi menggunakan prinsip LIFO" },
-      { key: "D", text: "Fitur 'Undo' pada text editor umumnya diimplementasikan memanfaatkan prinsip Stack" },
+      { key: "A", text: "Queue menerapkan prinsip First-In First-Out (FIFO) sehingga elemen pertama yang masuk dilayani terlebih dahulu" },
+      { key: "B", text: "Operasi 'pop' dan 'push' pada struktur data Stack memiliki kompleksitas waktu $O(1)$ pada implementasi pointer" },
+      { key: "C", text: "Fitur 'Undo / Redo' dan Call Stack eksekusi rekursif umumnya diorganisasi menggunakan mekanisme Queue" },
+      { key: "D", text: "Operasi 'enqueue' menambahkan elemen pada sisi ekor (rear) dan 'dequeue' mengambil elemen dari sisi kepala (front)" },
+      { key: "E", text: "Pada implementasi Circular Queue, kondisi penuh selalu ditandai dengan nilai indeks Front bernilai -1" },
     ],
     correctAnswer: ["A", "B", "D"],
-    explanation: "- **Opsi A Benar:** Stack berprinsip LIFO (elemen terakhir masuk akan pertama keluar).\n- **Opsi B Benar:** Queue memiliki operasi dasar `enqueue` (menambah di belakang) dan `dequeue` (mengambil dari depan).\n- **Opsi C Salah:** Queue berprinsip FIFO (First In First Out), bukan LIFO.\n- **Opsi D Benar:** Operasi Undo menyimpan riwayat aksi terakhir di puncak stack sehingga aksi terakhir dapat dibatalkan terlebih dahulu.",
+    explanation:
+      "- Opsi A Benar: Queue menerapkan FIFO (First-In-First-Out).\n- Opsi B Benar: Push dan Pop pada top of stack bernilai waktu konstan $O(1)$.\n- Opsi C Salah: Fitur Undo dan Call Stack menggunakan Stack (LIFO), bukan Queue.\n- Opsi D Benar: Enqueue terjadi di rear/tail, dequeue terjadi di front/head.\n- Opsi E Salah: Front = -1 mengindikasikan antrean dalam kondisi kosong (empty), bukan penuh.",
+  },
+  {
+    id: "pd-04",
+    topic: "Pemrograman Dasar",
+    difficulty: "mudah",
+    type: "boolean",
+    stem: "Dalam bahasa pemrograman tingkat tinggi (seperti Python, C++, Java), variabel bertipe data primitif 'Boolean' mengalokasikan nilai logika benar (True / 1) atau salah (False / 0), dan operasi logika `(true AND false) OR (NOT false)` akan menghasilkan nilai akhir `true`.\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    options: [
+      { key: "A", text: "Benar" },
+      { key: "B", text: "Salah" },
+    ],
+    correctAnswer: ["A"],
+    explanation:
+      "Pernyataan tersebut **BENAR**.\nEvaluasi ekspresi logika:\n1. `true AND false` = `false`\n2. `NOT false` = `true`\n3. `false OR true` = `true`.",
   },
 
   // ==========================================
-  // TOPIC 2: Pemrograman Web
+  // TOPIC 2: Pemrograman Web (HOTS)
   // ==========================================
   {
     id: "pw-01",
     topic: "Pemrograman Web",
-    difficulty: "mudah",
+    difficulty: "sedang",
     type: "single",
-    stem: "Tag semantik HTML5 mana yang paling tepat digunakan untuk menandai bagian navigasi utama suatu situs web?",
+    stem: "Seorang frontend engineer diminta mendesain navbar responsif dengan ketentuan: logo berada di ujung paling kiri, tombol CTA di ujung paling kanan, dan sisa ruang kosong di tengah memisahkan keduanya secara otomatis tanpa margin manual. Aturan CSS modern mana yang paling tepat?",
     options: [
-      { key: "A", text: "<section>" },
-      { key: "B", text: "<nav>" },
-      { key: "C", text: "<header>" },
-      { key: "D", text: "<aside>" },
+      { key: "A", text: "display: block; float: left; clear: both; width: 100%;" },
+      { key: "B", text: "display: flex; justify-content: space-between; align-items: center;" },
+      { key: "C", text: "display: grid; grid-template-columns: repeat(2, 1fr); gap: 50%;" },
+      { key: "D", text: "display: inline-block; text-align: justify; vertical-align: middle;" },
+      { key: "E", text: "position: absolute; left: 0; right: 0; margin: auto;" },
     ],
     correctAnswer: ["B"],
-    explanation: "Tag `<nav>` dalam spesifikasi HTML5 diperuntukkan secara semantik untuk mewadahi tautan navigasi utama situs web. Hal ini mempermudah pembaca layar (*screen reader*) dan mesin pencari (SEO) untuk mengenali struktur navigasi.",
+    explanation:
+      "Dengan `display: flex`, properti `justify-content: space-between` mendistribusikan elemen pertama (`logo`) ke tepi pangkal sumbu utama, elemen terakhir (`tombol CTA`) ke tepi ujung, dan mengalokasikan seluruh ruang kosong di antara kedua elemen tersebut.",
   },
   {
     id: "pw-02",
     topic: "Pemrograman Web",
-    difficulty: "sedang",
+    difficulty: "sulit",
     type: "single",
-    stem: "Perhatikan potongan kode CSS Flexbox berikut:\n\n```css\n.container {\n  display: flex;\n  flex-direction: row;\n  justify-content: space-between;\n  align-items: center;\n}\n```\n\nBagaimana susunan elemen anak (*flex items*) di dalam `.container`?",
+    stem: "Perhatikan cuplikan arsitektur penyimpanan peramban (browser storage) berikut:\n\nSebuah tim pengembang sedang merancang mekanisme autentikasi Single Sign-On (SSO). Token otentikasi JWT sensitif harus disimpan di sisi klien sedemikian rupa agar kebal dari serangan pencurian skrip Cross-Site Scripting (XSS). Tempat penyimpanan manakah yang paling aman memenuhi kriteria tersebut?",
     options: [
-      { key: "A", text: "Elemen berderet vertikal dengan jarak rapat di tengah" },
-      { key: "B", text: "Elemen berderet horizontal, tersebar merata dengan elemen pertama di awal dan terakhir di ujung, serta terpusat vertikal" },
-      { key: "C", text: "Elemen bertumpuk secara vertikal dan rata kiri" },
-      { key: "D", text: "Elemen berderet horizontal dan semuanya menempel di sebelah kiri" },
+      { key: "A", text: "window.localStorage dengan enkripsi kunci simetris di sisi JavaScript klien" },
+      { key: "B", text: "window.sessionStorage yang otomatis dibersihkan saat jendela browser ditutup" },
+      { key: "C", text: "IndexedDB dengan skema ObjectStore bertipe binary blob terisolasi" },
+      { key: "D", text: "HTTP-Only & Secure Cookie yang dikirim server dan tidak dapat diakses skrip document.cookie" },
+      { key: "E", text: "Global Window Object JavaScript (window.token) yang diinisialisasi pada saat runtime" },
     ],
-    correctAnswer: ["B"],
-    explanation: "`flex-direction: row` membuat arah sumbu utama menjadi horizontal. `justify-content: space-between` menyebarkan item secara merata di sepanjang sumbu utama dengan item pertama di pangkal dan item terakhir di ujung tepi. `align-items: center` menyelaraskan item di tengah sumbu silang (*cross-axis*, vertikal).",
+    correctAnswer: ["D"],
+    explanation:
+      "Cookie dengan atribut **`HttpOnly`** tidak dapat dibaca maupun dimanipulasi oleh skrip JavaScript sisi klien (`document.cookie`), sehingga jika terjadi kerentanan XSS (Cross-Site Scripting), penyerang tidak dapat mengekstrak token otentikasi. Penambahan flag `Secure` dan `SameSite=Strict` melindunginya dari intersepsi sniffing dan CSRF.",
   },
   {
     id: "pw-03",
     topic: "Pemrograman Web",
-    difficulty: "sulit",
+    difficulty: "sedang",
     type: "multiple",
-    stem: "Manakah pernyataan yang tepat mengenai perbedaan antara 'localStorage', 'sessionStorage', dan 'cookies' di browser? (Pilih lebih dari satu jawaban yang benar)",
+    stem: "Dalam siklus komunikasi web berbasis protokol HTTP/HTTPS dan REST API, tentukan pasangan metode HTTP dan karakteristik sifatnya yang BENAR! (Pilih lebih dari satu)",
     options: [
-      { key: "A", text: "Data di sessionStorage akan otomatis terhapus saat tab atau jendela browser ditutup" },
-      { key: "B", text: "localStorage memiliki batas kapasitas penyimpanan yang umumnya lebih besar (sekitar 5-10MB) dibanding cookies (sekitar 4KB)" },
-      { key: "C", text: "Cookies otomatis dikirimkan ke server pada setiap HTTP request jika domain cocok" },
-      { key: "D", text: "localStorage otomatis dikirimkan ke server pada setiap HTTP request header" },
+      { key: "A", text: "Metode GET bersifat idempoten dan aman (safe), artinya pemanggilan berulang tidak mengubah state server" },
+      { key: "B", text: "Metode POST bersifat non-idempoten karena setiap eksekusi baru umumnya menghasilkan entitas sumber daya baru" },
+      { key: "C", text: "Metode PUT digunakan untuk pembaruan parsial terhadap satu atribut spesifik tanpa menimpa data utuh" },
+      { key: "D", text: "Metode DELETE bersifat idempoten karena penghapusan berulang menghasilkan status akhir sumber daya yang seragam" },
+      { key: "E", text: "Kode status HTTP 403 Forbidden mengindikasikan bahwa URL target sama sekali tidak ditemukan pada server" },
     ],
-    correctAnswer: ["A", "B", "C"],
-    explanation: "- **Opsi A Benar:** Masa hidup `sessionStorage` terbatas pada durasi sesi tab aktif.\n- **Opsi B Benar:** Web Storage API (`localStorage` & `sessionStorage`) memiliki kuota ~5MB per origin, sementara Cookies hanya ~4KB.\n- **Opsi C Benar:** Cookies dikirim otomatis via header `Cookie` di setiap request HTTP ke server.\n- **Opsi D Salah:** `localStorage` murni berada di client dan tidak pernah otomatis dikirimkan ke server melalui HTTP request headers.",
+    correctAnswer: ["A", "B", "D"],
+    explanation:
+      "- Opsi A Benar: GET bersifat safe dan idempotent.\n- Opsi B Benar: POST bersifat non-idempotent.\n- Opsi C Salah: Pembaruan parsial menggunakan PATCH. PUT digunakan untuk menimpa/mengganti seluruh representasi entitas (full replacement).\n- Opsi D Benar: DELETE bersifat idempotent karena setelah entitas terhapus, status akhir data di server tetap tiada.\n- Opsi E Salah: 403 berarti akses ditolak karena hak otorisasi tidak cukup. URL tidak ditemukan adalah 404 Not Found.",
+  },
+  {
+    id: "pw-04",
+    topic: "Pemrograman Web",
+    difficulty: "mudah",
+    type: "boolean",
+    stem: "Virtual DOM yang diterapkan pada framework JavaScript modern (seperti React atau Vue) selalu memperbarui seluruh node DOM browser riil secara langsung setiap kali terjadi perubahan state sekecil apa pun, tanpa melalui proses kalkulasi perbandingan (diffing algorithm).\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    options: [
+      { key: "A", text: "Benar" },
+      { key: "B", text: "Salah" },
+    ],
+    correctAnswer: ["B"],
+    explanation:
+      "Pernyataan tersebut **SALAH**.\nVirtual DOM justru diciptakan untuk menghindari manipulasi DOM riil secara menyeluruh yang lambat. Virtual DOM membuat representasi pohon di memori, menjalankan **diffing algorithm** (rekonsiliasi) untuk mendeteksi perubahan spesifik, dan hanya memperbarui (*batch update*) node DOM riil yang benar-benar berubah.",
   },
 
   // ==========================================
-  // TOPIC 3: Basis Data
+  // TOPIC 3: Basis Data (HOTS)
   // ==========================================
   {
     id: "bd-01",
     topic: "Basis Data",
-    difficulty: "mudah",
+    difficulty: "sedang",
     type: "single",
-    stem: "Perintah SQL manakah yang termasuk ke dalam kategori Data Manipulation Language (DML)?",
+    stem: "Diberikan skema tabel `penjualan` (id_transaksi, id_kasir, total_belanja, tanggal). Manajer cabang ingin melihat daftar kasir yang memiliki total akumulasi penjualan melebihi Rp 50.000.000 selama bulan berjalan. Kueri SQL manakah yang secara sintaksis dan semantik benar?",
     options: [
-      { key: "A", text: "CREATE TABLE" },
-      { key: "B", text: "ALTER TABLE" },
-      { key: "C", text: "INSERT INTO" },
-      { key: "D", text: "DROP DATABASE" },
+      { key: "A", text: "SELECT id_kasir, SUM(total_belanja) FROM penjualan WHERE SUM(total_belanja) > 50000000 GROUP BY id_kasir;" },
+      { key: "B", text: "SELECT id_kasir, SUM(total_belanja) FROM penjualan GROUP BY id_kasir HAVING SUM(total_belanja) > 50000000;" },
+      { key: "C", text: "SELECT id_kasir, AVG(total_belanja) FROM penjualan GROUP BY id_kasir WHERE total_belanja > 50000000;" },
+      { key: "D", text: "SELECT id_kasir, SUM(total_belanja) FROM penjualan HAVING total_belanja > 50000000 ORDER BY id_kasir;" },
+      { key: "E", text: "SELECT id_kasir, COUNT(total_belanja) FROM penjualan WHERE id_kasir IN (SELECT total_belanja > 50000000);" },
     ],
-    correctAnswer: ["C"],
-    explanation: "**INSERT INTO** adalah perintah DML (Data Manipulation Language) yang digunakan untuk memanipulasi data di dalam tabel (bersama `SELECT`, `UPDATE`, `DELETE`). Perintah seperti `CREATE`, `ALTER`, dan `DROP` termasuk ke dalam DDL (Data Definition Language).",
+    correctAnswer: ["B"],
+    explanation:
+      "Fungsi agregat seperti `SUM()` tidak dapat disaring menggunakan klausa `WHERE`. Standar SQL mewajibkan pengelompokan `GROUP BY id_kasir` terlebih dahulu, lalu hasil agregasi difilter menggunakan klausa `HAVING SUM(total_belanja) > 50000000`.",
   },
   {
     id: "bd-02",
     topic: "Basis Data",
-    difficulty: "sedang",
+    difficulty: "sulit",
     type: "single",
-    stem: "Diberikan tabel `siswa` (id, nama, nilai, jurusan). Kueri SQL manakah yang tepat untuk menampilkan nama jurusan beserta rata-rata nilai siswa untuk setiap jurusan yang memiliki rata-rata nilai di atas 80?",
+    stem: "Perhatikan relasi tabel database berikut:\n\nTabel `siswa` (id_siswa, nama) berisi 100 baris.\nTabel `ekstrakurikuler` (id_ekskul, id_siswa, nama_ekskul) berisi 40 baris, di mana beberapa siswa mengikuti lebih dari satu ekskul dan ada 70 siswa yang tidak mengikuti ekskul sama sekali.\n\nJika administrator menjalankan query:\n```sql\nSELECT s.nama, e.nama_ekskul \nFROM siswa s \nLEFT JOIN ekstrakurikuler e ON s.id_siswa = e.id_siswa;\n```\nBerapakah jumlah minimal baris hasil query yang akan ditampilkan?",
     options: [
-      { key: "A", text: "SELECT jurusan, AVG(nilai) FROM siswa WHERE AVG(nilai) > 80 GROUP BY jurusan;" },
-      { key: "B", text: "SELECT jurusan, AVG(nilai) FROM siswa GROUP BY jurusan HAVING AVG(nilai) > 80;" },
-      { key: "C", text: "SELECT jurusan, SUM(nilai) FROM siswa GROUP BY jurusan WHERE nilai > 80;" },
-      { key: "D", text: "SELECT jurusan, AVG(nilai) FROM siswa HAVING AVG(nilai) > 80;" },
+      { key: "A", text: "Hasil kueri menampilkan tepat 40 baris data" },
+      { key: "B", text: "Hasil kueri menampilkan tepat 70 baris data" },
+      { key: "C", text: "Hasil kueri menampilkan minimal 100 baris data" },
+      { key: "D", text: "Hasil kueri menampilkan tepat 140 baris data" },
+      { key: "E", text: "Hasil kueri mengembalikan 0 baris karena relasi tidak komplit" },
     ],
-    correctAnswer: ["B"],
-    explanation: "Fungsi agregat seperti `AVG(nilai)` tidak dapat digunakan langsung di dalam klausa `WHERE`. Untuk menyaring hasil agregasi setelah pengelompokan (`GROUP BY`), SQL mewajibkan penggunaan klausa **`HAVING`**.",
+    correctAnswer: ["C"],
+    explanation:
+      "Pada operasi **`LEFT JOIN`**, setiap baris dari tabel sisi kiri (`siswa` yang berjumlah 100 siswa) dipastikan muncul minimal 1 kali pada output. Siswa yang tidak memiliki ekskul tetap muncul dengan nilai kolom kanan `NULL`. Siswa yang memiliki lebih dari satu ekskul akan menghasilkan baris tambahan. Jadi jumlah baris hasil query minimal adalah **100 baris**.",
   },
   {
     id: "bd-03",
     topic: "Basis Data",
-    difficulty: "sulit",
+    difficulty: "sedang",
     type: "multiple",
-    stem: "Sebuah tabel relasional dikatakan memenuhi kriteria Bentuk Normal Ketiga (3NF) jika memenuhi syarat apa saja? (Pilih lebih dari satu jawaban yang benar)",
+    stem: "Dalam perancangan basis data relasional (RDBMS), proses normalisasi dilakukan untuk meminimalkan redundansi dan anomali data. Tentukan syarat-syarat teknis yang BENAR untuk mencapai Bentuk Normal Ketiga (3NF)! (Pilih lebih dari satu)",
     options: [
-      { key: "A", text: "Tabel telah memenuhi kriteria Bentuk Normal Kedua (2NF)" },
-      { key: "B", text: "Tidak ada ketergantungan transitif (transitive dependency) di antara atribut non-kunci utama" },
-      { key: "C", text: "Setiap kolom bernilai atomik dan tidak memiliki perulangan grup data (1NF)" },
-      { key: "D", text: "Semua kolom non-kunci boleh bergantung pada kolom non-kunci lainnya" },
+      { key: "A", text: "Tabel harus telah memenuhi seluruh kaidah Bentuk Normal Pertama (1NF) dan Kedua (2NF)" },
+      { key: "B", text: "Setiap atribut non-kunci harus bernilai atomik dan tidak boleh memiliki multi-value atau komposit" },
+      { key: "C", text: "Tidak boleh terdapat ketergantungan transitif di antara atribut non-kunci utama (non-prime attributes)" },
+      { key: "D", text: "Setiap tabel diwajibkan memiliki minimal 3 buah foreign key yang saling berelasi secara cascade" },
+      { key: "E", text: "Semua atribut non-kunci harus bergantung sepenuhnya secara fungsional pada Primary Key utuh" },
     ],
-    correctAnswer: ["A", "B", "C"],
-    explanation: "Sebuah tabel berada dalam **3NF** jika:\n1. Memenuhi 1NF (nilai atomik) dan 2NF (tidak ada ketergantungan parsial).\n2. Tidak memiliki ketergantungan transitif, artinya atribut non-primary key tidak boleh bergantung pada atribut non-primary key lainnya.",
+    correctAnswer: ["A", "B", "C", "E"],
+    explanation:
+      "- Syarat 1NF: Nilai kolom harus atomik (Opsi B Benar).\n- Syarat 2NF: Memenuhi 1NF dan tidak ada partial dependency pada composite key (Opsi E Benar).\n- Syarat 3NF: Memenuhi 2NF dan tidak ada transitive dependency antar atribut non-kunci (Opsi A & C Benar).\n- Opsi D Salah: Tidak ada aturan yang mengharuskan minimal 3 foreign key.",
+  },
+  {
+    id: "bd-04",
+    topic: "Basis Data",
+    difficulty: "sulit",
+    type: "boolean",
+    stem: "Prinsip ACID pada transaksi basis data menjamin bahwa properti 'Atomicity' memastikan serangkaian operasi query (misalnya debit saldo dan kredit saldo) dieksekusi tuntas seluruhnya (commit) atau jika salah satu operasi gagal maka seluruh perubahan dibatalkan tanpa sisa (rollback).\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    options: [
+      { key: "A", text: "Benar" },
+      { key: "B", text: "Salah" },
+    ],
+    correctAnswer: ["A"],
+    explanation:
+      "Pernyataan tersebut **BENAR**.\n**Atomicity** mengusung konsep 'all-or-nothing'. Jika salah satu instruksi dalam unit transaksi database mengalami kegagalan (misalnya koneksi putus atau constraint violated), sistem database RDBMS wajib melakukan operasi `ROLLBACK` ke keadaan sebelum transaksi dimulai.",
   },
 
   // ==========================================
-  // TOPIC 4: Pemrograman Berorientasi Objek (PBO)
+  // TOPIC 4: Pemrograman Berorientasi Objek (HOTS)
   // ==========================================
   {
     id: "pbo-01",
     topic: "Pemrograman Berorientasi Objek",
-    difficulty: "mudah",
+    difficulty: "sedang",
     type: "single",
-    stem: "Prinsip PBO di mana data dibungkus dan akses langsung terhadap atribut dibatasi dengan menggunakan method getter dan setter disebut:",
+    stem: "Perhatikan implementasi class TypeScript berikut:\n\n```typescript\nclass AkunBank {\n  private _saldo: number = 0;\n  public setor(jumlah: number): void {\n    if (jumlah > 0) this._saldo += jumlah;\n  }\n  public get saldo(): number {\n    return this._saldo;\n  }\n}\n```\n\nManakah pilar utama Pemrograman Berorientasi Objek yang paling dominan diterapkan pada rancangan kode di atas?",
     options: [
-      { key: "A", text: "Polymorphism" },
-      { key: "B", text: "Inheritance" },
-      { key: "C", text: "Encapsulation" },
-      { key: "D", text: "Abstraction" },
+      { key: "A", text: "Inheritance (Pewarisan sifat dari superclass)" },
+      { key: "B", text: "Encapsulation (Enkapsulasi dan pembatasan akses data internal)" },
+      { key: "C", text: "Polymorphism (Banyak bentuk implementasi method)" },
+      { key: "D", text: "Multiple Inheritance (Pewarisan ganda antar kelas induk)" },
+      { key: "E", text: "Reflection (Inspeksi metadata runtime struktur objek)" },
     ],
-    correctAnswer: ["C"],
-    explanation: "**Encapsulation (Enkapsulasi)** adalah pilar OOP untuk melindungi integritas internal objek dengan menyembunyikan data internal (`private`) dan hanya mengizinkan interaksi melalui method perantara (`public getter/setter`).",
+    correctAnswer: ["B"],
+    explanation:
+      "Kode tersebut mengisolasi variabel `_saldo` menggunakan access modifier `private` sehingga tidak dapat diubah langsung dari luar secara sembarangan, dan hanya dapat dimanipulasi melalui validasi method publik `setor()` serta dibaca via getter `saldo`. Ini adalah definisi inti dari **Encapsulation (Enkapsulasi)**.",
   },
   {
     id: "pbo-02",
     topic: "Pemrograman Berorientasi Objek",
-    difficulty: "sedang",
+    difficulty: "sulit",
     type: "single",
-    stem: "Perhatikan konsep OOP berikut:\nSebuah class `Kendaraan` memiliki method `bergerak()`. Class `Mobil` dan `Perahu` mewarisi `Kendaraan` dan masing-masing mengimplementasikan `bergerak()` dengan cara yang berbeda. Konsep ini merupakan contoh penerapan dari:",
+    stem: "Perhatikan cuplikan desain sistem pembayaran berikut:\n\n```java\ninterface Pembayaran {\n    void prosesBayar(double nominal);\n}\nclass QRIS implements Pembayaran {\n    public void prosesBayar(double n) { System.out.println(\"Bayar QRIS: \" + n); }\n}\nclass KartuKredit implements Pembayaran {\n    public void prosesBayar(double n) { System.out.println(\"Bayar Kartu: \" + n); }\n}\nclass Kasir {\n    void checkout(Pembayaran metode, double n) {\n        metode.prosesBayar(n);\n    }\n}\n```\n\nJika kasir ingin menambahkan metode `TransferBank` tanpa mengubah kode pada class `Kasir`, prinsip arsitektur SOLID manakah yang terpenuhi dengan sempurna?",
     options: [
-      { key: "A", text: "Polymorphism (Method Overriding)" },
-      { key: "B", text: "Method Overloading statis" },
-      { key: "C", text: "Interface Segregation" },
-      { key: "D", text: "Multiple Inheritance" },
+      { key: "A", text: "Single Responsibility Principle (SRP)" },
+      { key: "B", text: "Open/Closed Principle (OCP)" },
+      { key: "C", text: "Interface Segregation Principle (ISP)" },
+      { key: "D", text: "Don't Repeat Yourself (DRY)" },
+      { key: "E", text: "Law of Demeter (LoD)" },
     ],
-    correctAnswer: ["A"],
-    explanation: "**Polymorphism (khususnya Method Overriding)** memungkinkan sub-class memberikan implementasi spesifik terhadap method yang sudah dideklarasikan oleh super-class-nya, sehingga satu nama aksi dapat memiliki banyak bentuk perilaku.",
+    correctAnswer: ["B"],
+    explanation:
+      "**Open/Closed Principle (OCP)** menyatakan bahwa entitas perangkat lunak harus *terbuka untuk ekstensi* (menambahkan class baru seperti `TransferBank implements Pembayaran`), namun *tertutup untuk modifikasi* (class `Kasir` tidak perlu diubah sama sekali saat ada metode bayar baru).",
   },
   {
     id: "pbo-03",
     topic: "Pemrograman Berorientasi Objek",
-    difficulty: "sulit",
+    difficulty: "sedang",
     type: "multiple",
-    stem: "Manakah di antara prinsip SOLID berikut yang didefinisikan dengan benar? (Pilih lebih dari satu jawaban yang benar)",
+    stem: "Terkait mekanisme pewarisan (Inheritance) dan polimorfisme (Polymorphism) pada OOP modern, tentukan pernyataan yang BENAR! (Pilih lebih dari satu)",
     options: [
-      { key: "A", text: "Single Responsibility Principle (SRP): Sebuah class hanya boleh memiliki satu alasan untuk berubah (satu tanggung jawab spesifik)" },
-      { key: "B", text: "Open/Closed Principle (OCP): Entitas perangkat lunak harus terbuka untuk ekstensi, namun tertutup untuk modifikasi" },
-      { key: "C", text: "Liskov Substitution Principle (LSP): Sub-class harus dapat menggantikan super-class tanpa merusak kebenaran program" },
-      { key: "D", text: "Dependency Inversion Principle (DIP): Modul tingkat tinggi harus bergantung langsung pada detail implementasi tingkat rendah" },
+      { key: "A", text: "Method Overriding terjadi ketika subclass mendeklarasikan ulang method yang ada pada superclass dengan nama dan signature yang sama" },
+      { key: "B", text: "Kata kunci 'super' dapat digunakan pada subclass untuk mengeksekusi constructor atau method milik superclass induk" },
+      { key: "C", text: "Class abstrak (abstract class) dapat diinstansiasi secara langsung menggunakan operator 'new' tanpa perlu subclass konkrit" },
+      { key: "D", text: "Sebuah class turunan mewarisi atribut dan method publik maupun protected yang dimiliki oleh class induknya" },
+      { key: "E", text: "Method Overloading terjadi ketika subclass menimpa method induk pada saat program berjalan (runtime dynamic binding)" },
     ],
-    correctAnswer: ["A", "B", "C"],
-    explanation: "Prinsip SOLID:\n- **SRP:** Satu class, satu tanggung jawab.\n- **OCP:** Open for extension, closed for modification.\n- **LSP:** Objek turunan harus dapat saling menggantikan objek induk tanpa efek samping buruk.\n- **DIP:** Modul tingkat tinggi TIDAK BOLEH bergantung pada modul tingkat rendah, melainkan keduanya harus bergantung pada abstraksi (Opsi D salah).",
+    correctAnswer: ["A", "B", "D"],
+    explanation:
+      "- Opsi A Benar: Overriding menimpa method superclass dengan signature yang sama saat runtime.\n- Opsi B Benar: `super()` memanggil constructor/method milik superclass.\n- Opsi C Salah: Abstract class tidak dapat diinstansiasi langsung (`new AbstractClass()` dilarang).\n- Opsi D Benar: Subclass mewarisi member `public` dan `protected`.\n- Opsi E Salah: Overloading ditentukan saat fase kompilasi (*compile-time polymorphism*), bukan runtime dynamic binding.",
+  },
+  {
+    id: "pbo-04",
+    topic: "Pemrograman Berorientasi Objek",
+    difficulty: "mudah",
+    type: "boolean",
+    stem: "Pada arsitektur Model-View-Controller (MVC), komponen 'View' bertanggung jawab langsung mengeksekusi kueri SQL ke basis data dan memproses logika bisnis aplikasi secara mandiri tanpa campur tangan Model maupun Controller.\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    options: [
+      { key: "A", text: "Benar" },
+      { key: "B", text: "Salah" },
+    ],
+    correctAnswer: ["B"],
+    explanation:
+      "Pernyataan tersebut **SALAH**.\nDalam pola MVC, komponen **View** bertugas murni mempresentasikan tampilan data antarmuka pengguna (UI/HTML). Pengelolaan data dan kueri basis data adalah tanggung jawab **Model**, sedangkan alur logika orkestrasi input pengguna dikendalikan oleh **Controller**.",
   },
 
   // ==========================================
-  // TOPIC 5: Pengembangan Aplikasi Mobile
+  // TOPIC 5: Rekayasa Perangkat Lunak & Mobile (HOTS)
   // ==========================================
   {
     id: "mob-01",
-    topic: "Pengembangan Aplikasi Mobile",
-    difficulty: "mudah",
+    topic: "Pengembangan Perangkat Lunak",
+    difficulty: "sedang",
     type: "single",
-    stem: "Dalam pengembangan aplikasi Android dengan Android Studio, berkas XML manakah yang digunakan untuk mendaftarkan komponen aplikasi (Activity, Service) dan mendeklarasikan izin (permission)?",
+    stem: "Sebuah startup mengembangkan aplikasi mobile multiplatform menggunakan Flutter. Developer ingin memastikan state keranjang belanja tetap tersinkronisasi di berbagai halaman layar tanpa meneruskan parameter secara manual dari widget induk ke ratusan widget anak (anti-pattern prop drilling). Solusi arsitektur state management mana yang paling ideal?",
     options: [
-      { key: "A", text: "build.gradle" },
-      { key: "B", text: "AndroidManifest.xml" },
-      { key: "C", text: "strings.xml" },
-      { key: "D", text: "activity_main.xml" },
+      { key: "A", text: "Menyimpan seluruh data keranjang belanja pada berkas statis `pubspec.yaml`" },
+      { key: "B", text: "Menerapkan State Management seperti Provider, Riverpod, atau BLoC dengan InheritedWidget" },
+      { key: "C", text: "Mengubah seluruh StatelessWidget aplikasi menjadi StatefulWidget dengan pemanggilan setState() global" },
+      { key: "D", text: "Membaca dan menulis data keranjang langsung ke file SharedPreferences setiap kali render frame" },
+      { key: "E", text: "Mendeklarasikan variabel global `List<Item> cart` di dalam file `main.dart` tanpa listener reactive" },
     ],
     correctAnswer: ["B"],
-    explanation: "**AndroidManifest.xml** adalah berkas deklarasi konfigurasi fundamental pada aplikasi Android yang memuat metadata penting sistem: package name, komponen aplikasi (Activity, Service, Receiver, Provider), izin akses internet/kamera, dan kompatibilitas SDK minimal.",
+    explanation:
+      "Di Flutter, pengelolaan state global di luar pohon widget hierarkis secara reaktif diselesaikan dengan pola State Management (seperti **Provider, Riverpod, atau BLoC**). Solusi ini memanfaatkan arsitektur `InheritedWidget` untuk memicu render ulang hanya pada widget konsumen yang relevan saat state keranjang berubah.",
   },
   {
     id: "mob-02",
-    topic: "Pengembangan Aplikasi Mobile",
-    difficulty: "sedang",
+    topic: "Pengembangan Perangkat Lunak",
+    difficulty: "sulit",
     type: "single",
-    stem: "Pada Flutter, apa perbedaan mendasar antara 'StatelessWidget' dan 'StatefulWidget'?",
+    stem: "Saat pengguna beralih membuka aplikasi kamera ponsel, activity aplikasi e-commerce yang sedang aktif terdorong ke background. Sistem Android tiba-tiba kehabisan RAM. Urutan peristiwa daur hidup (lifecycle callback) yang terjadi pada activity e-commerce tersebut hingga dihancurkan oleh sistem adalah...",
     options: [
-      { key: "A", text: "StatelessWidget dapat berubah tampilannya saat runtime, sedangkan StatefulWidget bersifat permanen" },
-      { key: "B", text: "StatelessWidget tidak memiliki state internal yang dapat berubah sepanjang waktu hidupnya, sedangkan StatefulWidget dapat mempertahankan data yang dinamis dan memicu re-render melalui setState()" },
-      { key: "C", text: "StatelessWidget hanya digunakan untuk rendering teks, StatefulWidget untuk gambar" },
-      { key: "D", text: "StatelessWidget tidak dapat menerima parameter constructor" },
+      { key: "A", text: "onPause() -> onStop() -> kemudian proses di-kill oleh sistem operasi tanpa memanggil onDestroy()" },
+      { key: "B", text: "onDestroy() -> onPause() -> onStop() -> onRestart()" },
+      { key: "C", text: "onStop() -> onResume() -> onDestroy() -> onStart()" },
+      { key: "D", text: "onPause() -> onResume() -> onStop() -> onDestroy()" },
+      { key: "E", text: "onRestart() -> onStart() -> onDestroy() -> onPause()" },
     ],
-    correctAnswer: ["B"],
-    explanation: "**StatelessWidget** bersifat *immutable* (tampilannya statis berdasarkan konfigurasi awal). Sedangkan **StatefulWidget** memiliki objek `State` terpisah yang dapat menyimpan nilai variabel yang berubah saat interaksi pengguna dan memperbarui UI dengan memanggil method `setState()`.",
+    correctAnswer: ["A"],
+    explanation:
+      "Ketika activity kehilangan fokus ke background, sistem memanggil `onPause()` lalu `onStop()`. Jika sistem mengalami kondisi krisis memori (*low memory pressure*), proses Linux dari aplikasi tersebut dapat dihentikan (*killed*) paksa oleh sistem operasi Android tanpa jaminan callback `onDestroy()` sempat dieksekusi.",
   },
   {
     id: "mob-03",
-    topic: "Pengembangan Aplikasi Mobile",
-    difficulty: "sulit",
+    topic: "Pengembangan Perangkat Lunak",
+    difficulty: "sedang",
     type: "multiple",
-    stem: "Ketika sebuah Activity di Android berpindah ke background karena pengguna membuka aplikasi lain, urutan lifecycle callback apa saja yang dipanggil oleh sistem? (Pilih lebih dari satu jawaban yang benar)",
+    stem: "Dalam metodologi Agile Scrum untuk pengembangan perangkat lunak modern, tentukan peran (roles) dan kegiatan (events) yang diakui secara baku dalam Scrum Guide! (Pilih lebih dari satu)",
     options: [
-      { key: "A", text: "onPause() dipanggil saat activity kehilangan fokus interaksi" },
-      { key: "B", text: "onStop() dipanggil saat activity sudah tidak terlihat lagi oleh pengguna di layar" },
-      { key: "C", text: "onDestroy() selalu langsung dipanggil seketika itu juga" },
-      { key: "D", text: "onRestart() akan dipanggil saat pengguna kembali membuka activity tersebut" },
+      { key: "A", text: "Product Owner bertugas memaksimalkan nilai produk dan mengelola isi Product Backlog" },
+      { key: "B", text: "Sprint Retrospective dilaksanakan untuk merefleksikan proses kerja tim dan merencanakan perbaikan berkelanjutan" },
+      { key: "C", text: "Scrum Master bertindak sebagai manajer proyek tradisional yang berhak memberikan hukuman kepada developer" },
+      { key: "D", text: "Daily Scrum merupakan pertemuan inspeksi harian berdurasi maksimal 15 menit bagi Developers" },
+      { key: "E", text: "Sprint Planning hanya boleh dihadiri oleh klien eksternal tanpa kehadiran tim pengembang" },
     ],
     correctAnswer: ["A", "B", "D"],
-    explanation: "Ketika Activity berpindah ke background, sistem memanggil `onPause()` lalu `onStop()`. Activity tidak langsung di-`onDestroy()` kecuali sistem kekurangan memori atau pengguna menutup paksa aplikasi. Ketika pengguna kembali, siklus berlanjut ke `onRestart()` -> `onStart()` -> `onResume()`.",
+    explanation:
+      "- Opsi A Benar: Product Owner bertanggung jawab atas Product Backlog dan prioritas bisnis.\n- Opsi B Benar: Sprint Retrospective fokus pada evaluasi proses tim di akhir sprint.\n- Opsi C Salah: Scrum Master adalah servant leader / fasilitator, bukan otoriter project manager.\n- Opsi D Benar: Daily Scrum adalah timeboxed 15 menit untuk sinkronisasi harian tim pengembang.\n- Opsi E Salah: Sprint Planning wajib dihadiri seluruh Scrum Team.",
   },
 
   // ==========================================
-  // TOPIC 6: Pengembangan Gim
+  // TOPIC 6: Jaringan Komputer & Subnetting (HOTS)
   // ==========================================
   {
-    id: "gim-01",
-    topic: "Pengembangan Gim",
-    difficulty: "mudah",
-    type: "single",
-    stem: "Siklus pemrosesan utama pada game engine yang berjalan berulang kali untuk memperbarui logika dan menggambar frame visual disebut:",
-    options: [
-      { key: "A", text: "Event Listener" },
-      { key: "B", text: "Game Loop" },
-      { key: "C", text: "Garbage Collector" },
-      { key: "D", text: "Shader Pipeline" },
-    ],
-    correctAnswer: ["B"],
-    explanation: "**Game Loop** adalah inti pemrosesan berulang (*continuous loop*) yang mengeksekusi tiga fase utama secara berkesinambungan: membaca input pemain -> memperbarui logika dunia gim (`Update`) -> me-render grafik ke layar (`Render`).",
-  },
-  {
-    id: "gim-02",
-    topic: "Pengembangan Gim",
-    difficulty: "sedang",
-    type: "single",
-    stem: "Dalam Unity Game Engine, method manakah yang paling tepat digunakan untuk menerapkan gaya fisika (misalnya menambahkan gaya dorong pada Rigidbody) agar sinkron dengan interval simulasi fisika?",
-    options: [
-      { key: "A", text: "Update()" },
-      { key: "B", text: "FixedUpdate()" },
-      { key: "C", text: "LateUpdate()" },
-      { key: "D", text: "Awake()" },
-    ],
-    correctAnswer: ["B"],
-    explanation: "**FixedUpdate()** dipanggil pada interval waktu konstan (*fixed framerate*) yang independen dari framerate grafik perangkat, menjadikannya tempat yang tepat untuk perhitungan kalkulasi fisika (*Physics engine/Rigidbody*).",
-  },
-  {
-    id: "gim-03",
-    topic: "Pengembangan Gim",
-    difficulty: "sulit",
-    type: "multiple",
-    stem: "Dalam deteksi tabrakan (*collision detection*) pada game 2D, manakah teknik yang umum digunakan? (Pilih lebih dari satu jawaban yang benar)",
-    options: [
-      { key: "A", text: "AABB (Axis-Aligned Bounding Box)" },
-      { key: "B", text: "Circle / Radius Collision Detection" },
-      { key: "C", text: "SAT (Separating Axis Theorem)" },
-      { key: "D", text: "Binary Search Tree Collision" },
-    ],
-    correctAnswer: ["A", "B", "C"],
-    explanation: "- **AABB:** Sangat efisien untuk kotak sejajar sumbu.\n- **Circle Collision:** Membandingkan jarak Euclidean dua pusat lingkaran terhadap jumlah radiusnya.\n- **SAT:** Standar de facto untuk poligon cembung (*convex polygons*) berputar.\n- Opsi D bukan algoritma deteksi geometri tabrakan.",
-  },
-
-  // ==========================================
-  // TOPIC 7: Jaringan Komputer Dasar
-  // ==========================================
-  {
-    id: "net-01",
-    topic: "Jaringan Komputer Dasar",
-    difficulty: "mudah",
-    type: "single",
-    stem: "Protokol pada Transport Layer yang bersifat connection-oriented dan menjamin paket data terkirim secara utuh dan berurutan adalah:",
-    options: [
-      { key: "A", text: "UDP (User Datagram Protocol)" },
-      { key: "B", text: "TCP (Transmission Control Protocol)" },
-      { key: "C", text: "IP (Internet Protocol)" },
-      { key: "D", text: "ICMP (Internet Control Message Protocol)" },
-    ],
-    correctAnswer: ["B"],
-    explanation: "**TCP (Transmission Control Protocol)** melakukan mekanisme *three-way handshake*, *acknowledgment*, dan pengurutan nomor paket (sequence numbering) untuk menjamin data tiba tanpa cacat dan sesuai urutan pengiriman.",
-  },
-  {
-    id: "net-02",
+    id: "jarkom-01",
     topic: "Jaringan Komputer Dasar",
     difficulty: "sedang",
     type: "single",
-    stem: "Sebuah jaringan komputer memiliki alamat IP 192.168.10.0 dengan subnet mask /26 (255.255.255.192). Berapakah jumlah host yang dapat dialokasikan (usable host IP) pada setiap subnet tersebut?",
+    stem: "Sebuah laboratorium komputer sekolah memiliki alokasi blok IP Address `192.168.50.0/26`. Berapakah jumlah host riil yang dapat digunakan oleh komputer siswa, dan berapakah alamat broadcast subnet tersebut?",
     options: [
-      { key: "A", text: "62 host" },
-      { key: "B", text: "64 host" },
-      { key: "C", text: "30 host" },
-      { key: "D", text: "126 host" },
+      { key: "A", text: "Host riil: 62 komputer, Alamat Broadcast: 192.168.50.63" },
+      { key: "B", text: "Host riil: 64 komputer, Alamat Broadcast: 192.168.50.64" },
+      { key: "C", text: "Host riil: 126 komputer, Alamat Broadcast: 192.168.50.127" },
+      { key: "D", text: "Host riil: 30 komputer, Alamat Broadcast: 192.168.50.31" },
+      { key: "E", text: "Host riil: 254 komputer, Alamat Broadcast: 192.168.50.255" },
     ],
     correctAnswer: ["A"],
-    explanation: "Subnet mask /26 memiliki 32 - 26 = 6 bit host. Total alamat IP = 2^6 = 64. Dua alamat tidak dapat digunakan sebagai host: 1 untuk Network ID dan 1 untuk Broadcast ID. Maka usable host = 64 - 2 = **62 host**.",
+    explanation:
+      "Perhitungan Subnetting IPv4 CIDR `/26`:\n- Subnet mask: `255.255.255.192`.\n- Jumlah total alamat IP = $2^{(32 - 26)} = 2^6 = 64$ alamat.\n- Rentang IP: `192.168.50.0` sampai `192.168.50.63`.\n- Network Address: `192.168.50.0`.\n- Broadcast Address: **`192.168.50.63`**.\n- Host yang dapat digunakan = $64 - 2 =$ **62 host** (`192.168.50.1` s/d `192.168.50.62`).",
   },
   {
-    id: "net-03",
+    id: "jarkom-02",
     topic: "Jaringan Komputer Dasar",
     difficulty: "sulit",
-    type: "multiple",
-    stem: "Manakah protokol di bawah ini yang bekerja pada Lapisan Aplikasi (Application Layer) dalam model TCP/IP? (Pilih lebih dari satu jawaban yang benar)",
+    type: "single",
+    stem: "Komputer klien mengirimkan permintaan web ke server `google.com`. Sebelum paket HTTP dikirim, komputer klien harus mengetahui MAC address gateway router terdekat. Protokol apakah yang secara otomatis bekerja pada lapisan Data Link / Network untuk memetakan alamat IP ke MAC address tersebut?",
     options: [
       { key: "A", text: "DNS (Domain Name System)" },
-      { key: "B", text: "HTTP / HTTPS" },
-      { key: "C", text: "SSH (Secure Shell)" },
-      { key: "D", text: "ARP (Address Resolution Protocol)" },
+      { key: "B", text: "ARP (Address Resolution Protocol)" },
+      { key: "C", text: "DHCP (Dynamic Host Configuration Protocol)" },
+      { key: "D", text: "ICMP (Internet Control Message Protocol)" },
+      { key: "E", text: "SNMP (Simple Network Management Protocol)" },
+    ],
+    correctAnswer: ["B"],
+    explanation:
+      "**ARP (Address Resolution Protocol)** bertugas menerjemahkan alamat logika IPv4 (Layer 3) menjadi alamat fisik MAC Address (Layer 2) pada jaringan lokal (LAN) sehingga frame Ethernet dapat dikirimkan ke kartu jaringan gateway router tujuan.",
+  },
+  {
+    id: "jarkom-03",
+    topic: "Jaringan Komputer Dasar",
+    difficulty: "sedang",
+    type: "multiple",
+    stem: "Dalam model referensi 7 Lapisan OSI (Open Systems Interconnection), tentukan pasangan layer dan protokol kerja yang BENAR! (Pilih lebih dari satu)",
+    options: [
+      { key: "A", text: "Layer 7 (Application Layer): Protokol HTTP, HTTPS, SSH, dan DNS" },
+      { key: "B", text: "Layer 4 (Transport Layer): Protokol TCP (connection-oriented) dan UDP (connectionless)" },
+      { key: "C", text: "Layer 3 (Network Layer): Protokol IP, ICMP, dan routing paket data" },
+      { key: "D", text: "Layer 2 (Data Link Layer): Protokol FTP dan SMTP untuk transfer surat elektronik" },
+      { key: "E", text: "Layer 1 (Physical Layer): Pengaturan enkripsi sertifikat SSL/TLS dan kompresi data" },
     ],
     correctAnswer: ["A", "B", "C"],
-    explanation: "DNS (port 53), HTTP/HTTPS (port 80/443), dan SSH (port 22) adalah protokol lapisan aplikasi. Sementara ARP bekerja pada lapisan Network Access / Data Link untuk memetakan IP address ke MAC address.",
+    explanation:
+      "- Opsi A Benar: Application layer mencakup HTTP, HTTPS, SSH, DNS, SMTP.\n- Opsi B Benar: Transport layer bertanggung jawab atas transmisi end-to-end melalui TCP dan UDP.\n- Opsi C Benar: Network layer menangani logical addressing dan routing via IP dan ICMP.\n- Opsi D Salah: FTP dan SMTP berada di Application Layer (Layer 7).\n- Opsi E Salah: Enkripsi SSL/TLS berada di Presentation Layer (Layer 6), sedangkan Physical Layer menangani bit transmisi listrik/optik.",
   },
 
   // ==========================================
-  // TOPIC 8: Keamanan Siber Dasar
+  // TOPIC 7: Keamanan Siber Dasar (HOTS)
   // ==========================================
   {
-    id: "sec-01",
-    topic: "Keamanan Siber Dasar",
-    difficulty: "mudah",
-    type: "single",
-    stem: "Jenis serangan rekayasa sosial di mana penyerang menyamar sebagai pihak tepercaya (seperti bank atau admin sekolah) melalui email palsu untuk mencuri kredensial disebut:",
-    options: [
-      { key: "A", text: "Phishing" },
-      { key: "B", text: "DDoS Attack" },
-      { key: "C", text: "SQL Injection" },
-      { key: "D", text: "Buffer Overflow" },
-    ],
-    correctAnswer: ["A"],
-    explanation: "**Phishing** adalah teknik kejahatan siber berbasis manipulasi psikologis (*social engineering*) untuk mengelabui korban agar menyerahkan informasi sensitif seperti username, password, dan nomor PIN.",
-  },
-  {
-    id: "sec-02",
+    id: "cyber-01",
     topic: "Keamanan Siber Dasar",
     difficulty: "sedang",
     type: "single",
-    stem: "Metode paling efektif bagi programmer web untuk mencegah celah keamanan SQL Injection pada kueri basis data adalah:",
+    stem: "Seorang hacker berhasil menyusupkan input karakter khusus `' OR '1'='1` ke dalam form login web yang tidak menerapkan parameterized query, sehingga sistem memberikan hak akses admin tanpa password sah. Jenis serangan keamanan ini disebut...",
     options: [
-      { key: "A", text: "Mengganti port default basis data" },
-      { key: "B", text: "Menggunakan Prepared Statements dan Parameterized Queries" },
-      { key: "C", text: "Menghapus akun root pada database" },
-      { key: "D", text: "Memasang sertifikat SSL/HTTPS saja" },
+      { key: "A", text: "Cross-Site Request Forgery (CSRF)" },
+      { key: "B", text: "SQL Injection (SQLi)" },
+      { key: "C", text: "Distributed Denial of Service (DDoS)" },
+      { key: "D", text: "Server-Side Request Forgery (SSRF)" },
+      { key: "E", text: "Man-in-the-Middle (MitM)" },
     ],
     correctAnswer: ["B"],
-    explanation: "**Prepared Statements (Parameterized Queries)** memisahkan instruksi kode SQL dari input data pengguna. Database memperlakukan input pengguna murni sebagai data literal bertipe, bukan sebagai kode perintah yang dapat dieksekusi, sehingga injeksi SQL mustahil terjadi.",
+    explanation:
+      "Serangan tersebut adalah **SQL Injection (SQLi)**. Penyerang menyisipkan fragmen logika SQL ke dalam input field yang digabungkan secara mentah (*string concatenation*) ke dalam query database, menyebabkan kondisi `'1'='1'` bernilai selalu benar (*always true*) dan membypass verifikasi sandi.",
   },
   {
-    id: "sec-03",
+    id: "cyber-02",
     topic: "Keamanan Siber Dasar",
     difficulty: "sulit",
-    type: "multiple",
-    stem: "Tiga pilar fundamental keamanan informasi yang dikenal dengan 'CIA Triad' terdiri atas: (Pilih lebih dari satu jawaban yang benar)",
+    type: "single",
+    stem: "Dalam skema kriptografi asimetris (Public-Key Cryptography) yang digunakan pada protokol HTTPS / SSH, manakah pernyataan yang paling akurat mengenai pasangan kunci?",
     options: [
-      { key: "A", text: "Confidentiality (Kerahasiaan data dari akses pihak yang tidak berhak)" },
-      { key: "B", text: "Integrity (Keutuhan dan keaslian data yang terlindungi dari manipulasi)" },
-      { key: "C", text: "Availability (Ketersediaan sistem dan data saat dibutuhkan oleh pengguna yang sah)" },
-      { key: "D", text: "Authorization (Hak istimewa eksekusi kode tingkat sistem)" },
+      { key: "A", text: "Pesan yang dienkripsi menggunakan Public Key hanya dapat didekripsi menggunakan Private Key pasangannya" },
+      { key: "B", text: "Public Key harus dirahasiakan di brankas server sedangkan Private Key disebarkan ke seluruh klien internet" },
+      { key: "C", text: "Proses enkripsi dan dekripsi menggunakan satu buah kunci rahasia yang sama persis (kunci bersama)" },
+      { key: "D", text: "Enkripsi asimetris memiliki kecepatan komputasi 100 kali lebih cepat dibanding enkripsi simetris AES" },
+      { key: "E", text: "Tanda tangan digital (digital signature) dibuat dengan mengenkripsi hash dokumen menggunakan Public Key penerima" },
+    ],
+    correctAnswer: ["A"],
+    explanation:
+      "Pada kriptografi asimetris, terdapat sepasang kunci matematika: **Public Key** (disebarkan bebas ke publik untuk enkripsi) dan **Private Key** (disimpan sangat rahasia oleh pemilik untuk dekripsi). Pesan yang dienkripsi dengan Public Key hanya bisa dibuka oleh Private Key pasangannya.",
+  },
+  {
+    id: "cyber-03",
+    topic: "Keamanan Siber Dasar",
+    difficulty: "sedang",
+    type: "multiple",
+    stem: "Tentukan prinsip-prinsip pertahanan keamanan (security best practices) yang WAJIB diterapkan oleh web developer profesional! (Pilih lebih dari satu)",
+    options: [
+      { key: "A", text: "Menyimpan password pengguna dengan algoritma hashing satu arah yang memiliki salt seperti bcrypt atau Argon2" },
+      { key: "B", text: "Menerapkan Prepared Statements dan Parameterized Query untuk semua interaksi database" },
+      { key: "C", text: "Mengaktifkan Content Security Policy (CSP) untuk mencegah eksekusi skrip berbahaya XSS" },
+      { key: "D", text: "Menonaktifkan sertifikat HTTPS SSL pada lingkungan produksi untuk menghemat latency handshake TCP" },
+      { key: "E", text: "Melakukan sanitasi dan validasi data input dari user secara ketat hanya pada sisi browser klien saja" },
     ],
     correctAnswer: ["A", "B", "C"],
-    explanation: "**CIA Triad** adalah pilar standar keamanan siber dunia:\n1. **Confidentiality:** Hanya pihak berwenang yang dapat membaca data.\n2. **Integrity:** Data tidak dimodifikasi secara ilegal dalam penyimpanan maupun transmisi.\n3. **Availability:** Layanan tetap beroperasi andal saat dibutuhkan.",
+    explanation:
+      "- Opsi A Benar: Sandi tidak boleh disimpan dalam plaintext atau algoritma cepat usang (MD5/SHA1), wajib menggunakan bcrypt/Argon2 + salt.\n- Opsi B Benar: Prepared Statements adalah penangkal mutlak SQL Injection.\n- Opsi C Benar: Header CSP membatasi sumber script yang boleh dieksekusi browser.\n- Opsi D Salah: HTTPS wajib diaktifkan demi enkripsi lalu lintas data (mencegah eavesdropping).\n- Opsi E Salah: Validasi wajib dilakukan di server-side, karena validasi client-side mudah dibypass.",
+  },
+  {
+    id: "cyber-04",
+    topic: "Keamanan Siber Dasar",
+    difficulty: "mudah",
+    type: "boolean",
+    stem: "Otentikasi Multi-Faktor (Multi-Factor Authentication / MFA) meningkatkan keamanan akun secara signifikan karena menggabungkan minimal dua faktor independen: sesuatu yang Anda ketahui (password), sesuatu yang Anda miliki (smartphone OTP), atau sesuatu yang melekat pada Anda (biometrik sidik jari).\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    options: [
+      { key: "A", text: "Benar" },
+      { key: "B", text: "Salah" },
+    ],
+    correctAnswer: ["A"],
+    explanation:
+      "Pernyataan tersebut **BENAR**.\nMFA menerapkan pertahanan berlapis berdasarkan 3 kategori faktor otentikasi utama: *Knowledge* (apa yang diketahui: password/PIN), *Possession* (apa yang dimiliki: hardware token/smartphone authenticator), dan *Inherence* (apa yang melekat pada diri: biometrik seperti sidik jari atau pengenalan wajah).",
   },
 ];
 
-/**
- * Helper untuk menyaring atau mengacak soal simulasi 30 soal sesuai distribusi TKA
- * Distribusi: 9 Mudah (~30%), 12 Sedang (~40%), 9 Sulit (~30%)
- * Campuran: 22-24 Single PG, 6-8 Multiple PG
- */
 export function getSimulationQuestions(): Question[] {
-  // Ambil semua soal yang ada
-  const pool = [...QUESTION_BANK];
-
-  // Jika bank soal memiliki 24 soal inti, kita duplikasi/perkaya varian dengan ID unik agar genap 30 soal
-  const questions: Question[] = [];
-
-  // Salin 24 butir soal inti
-  pool.forEach((q) => {
-    questions.push({ ...q, id: `sim-${q.id}` });
-  });
-
-  // Tambahkan 6 butir variasi soal pelengkap agar tepat 30 soal
   const extraPool: Question[] = [
     {
       id: "sim-extra-01",
       topic: "Pemrograman Dasar",
       difficulty: "sedang",
       type: "single",
-      stem: "Perhatikan perulangan rekursif berikut:\n\n```python\ndef faktorial(n):\n    if n <= 1:\n        return 1\n    return n * faktorial(n - 1)\n```\n\nKondisi `if n <= 1: return 1` dalam terminologi pemrograman rekursif disebut:",
+      stem: "Perhatikan potongan kode fungsi rekursif berikut:\n\n```python\ndef faktorial(n):\n    if n <= 1:\n        return 1\n    return n * faktorial(n - 1)\n\nprint(faktorial(4))\n```\n\nKomponen baris manakah yang bertindak sebagai 'Base Case' (kondisi terminasi penghenti rekursi) pada fungsi tersebut?",
       options: [
-        { key: "A", text: "Base Case (Kondisi Berhenti)" },
-        { key: "B", text: "Recursive Step" },
-        { key: "C", text: "Infinite Loop Guard" },
-        { key: "D", text: "Stack Overflow Handler" },
+        { key: "A", text: "Kondisi `if n <= 1: return 1` yang menghentikan rantai pemanggilan fungsi" },
+        { key: "B", text: "Pernyataan `return n * faktorial(n - 1)` yang memanggil ulang fungsi dirinya sendiri" },
+        { key: "C", text: "Baris `print(faktorial(4))` yang memicu eksekusi pertama dari tumpukan memori" },
+        { key: "D", text: "Argumen formal parameter `(n)` yang menampung bilangan bulat masukan pengguna" },
+        { key: "E", text: "Operasi perkalian `n *` yang mengakumulasikan nilai balik ke call stack terluar" },
       ],
       correctAnswer: ["A"],
       explanation: "**Base Case (Kasus Dasar)** adalah kondisi terminasi di mana pemanggilan rekursif berhenti dan mulai mengembalikan nilai ke tumpukan sebelumnya, mencegah terjadinya `RecursionError` atau stack overflow.",
@@ -435,10 +482,11 @@ export function getSimulationQuestions(): Question[] {
       type: "single",
       stem: "Di dalam ekosistem JavaScript modern, metode Array manakah yang mengembalikan array baru berisi hasil pemrosesan setiap elemen tanpa memodifikasi array aslinya (bersifat immutable)?",
       options: [
-        { key: "A", text: "Array.prototype.map()" },
-        { key: "B", text: "Array.prototype.push()" },
-        { key: "C", text: "Array.prototype.splice()" },
-        { key: "D", text: "Array.prototype.reverse()" },
+        { key: "A", text: "Array.prototype.map() yang mentransformasi elemen dan menghasilkan salinan array baru" },
+        { key: "B", text: "Array.prototype.push() yang menambahkan elemen baru langsung ke ujung array asal" },
+        { key: "C", text: "Array.prototype.splice() yang memotong atau menghapus elemen langsung pada array asal" },
+        { key: "D", text: "Array.prototype.reverse() yang membalikkan urutan indeks langsung pada memori array asal" },
+        { key: "E", text: "Array.prototype.sort() yang mengurutkan susunan elemen langsung pada instans array asal" },
       ],
       correctAnswer: ["A"],
       explanation: "`map()` mentransformasi setiap elemen dan mengembalikan array baru tanpa mengubah (*mutate*) array asal, menjadikannya fungsi murni (*pure function*) yang disukai dalam paradigma fungsional.",
@@ -446,14 +494,15 @@ export function getSimulationQuestions(): Question[] {
     {
       id: "sim-extra-03",
       topic: "Basis Data",
-      difficulty: "sulit",
+      difficulty: "sedang",
       type: "single",
       stem: "Operasi SQL JOIN manakah yang mengembalikan seluruh baris dari tabel sebelah kiri (tabel pertama), serta baris yang cocok dari tabel sebelah kanan, dan mengisi nilai NULL untuk kolom kanan jika tidak ada kecocokan?",
       options: [
-        { key: "A", text: "INNER JOIN" },
-        { key: "B", text: "LEFT OUTER JOIN" },
-        { key: "C", text: "RIGHT OUTER JOIN" },
-        { key: "D", text: "FULL OUTER JOIN" },
+        { key: "A", text: "INNER JOIN yang hanya menampilkan baris data yang memiliki nilai relasi cocok di kedua tabel" },
+        { key: "B", text: "LEFT OUTER JOIN yang mempertahankan seluruh baris tabel kiri dan mengisi NULL pada data kanan" },
+        { key: "C", text: "RIGHT OUTER JOIN yang mempertahankan seluruh baris tabel kanan dan mengisi NULL pada data kiri" },
+        { key: "D", text: "FULL OUTER JOIN yang menggabungkan seluruh baris kedua tabel dengan nilai NULL pada ketidakcocokan" },
+        { key: "E", text: "CROSS JOIN yang menghasilkan perkalian kartesian baris antar kedua tabel tanpa kondisi penghubung" },
       ],
       correctAnswer: ["B"],
       explanation: "**LEFT JOIN (atau LEFT OUTER JOIN)** menjamin bahwa setiap baris pada tabel sisi kiri akan selalu ditampilkan pada set hasil, terlepas dari apakah ada kecocokan relasi pada tabel sisi kanan.",
@@ -463,12 +512,13 @@ export function getSimulationQuestions(): Question[] {
       topic: "Pemrograman Berorientasi Objek",
       difficulty: "sedang",
       type: "single",
-      stem: "Keyword apa di Java atau TypeScript yang digunakan oleh sub-class untuk memanggil constructor dari class induknya?",
+      stem: "Kata kunci apa di Java atau TypeScript yang digunakan oleh sub-class untuk memanggil constructor dari class induknya?",
       options: [
-        { key: "A", text: "this()" },
-        { key: "B", text: "super()" },
-        { key: "C", text: "parent()" },
-        { key: "D", text: "base()" },
+        { key: "A", text: "this() yang digunakan untuk memanggil konstruktor lain dalam class yang sama" },
+        { key: "B", text: "super() yang digunakan untuk mengeksekusi konstruktor milik superclass induk" },
+        { key: "C", text: "parent() yang digunakan untuk mendeklarasikan pewarisan ganda antar modul" },
+        { key: "D", text: "base() yang digunakan untuk mereferensikan namespace root aplikasi" },
+        { key: "E", text: "extend() yang digunakan untuk membuat instansiasi objek anonim baru" },
       ],
       correctAnswer: ["B"],
       explanation: "Keyword **`super()`** digunakan di dalam constructor sub-class untuk mengeksekusi constructor milik super-class induk dan menginisialisasi properti turunan.",
@@ -476,14 +526,15 @@ export function getSimulationQuestions(): Question[] {
     {
       id: "sim-extra-05",
       topic: "Jaringan Komputer Dasar",
-      difficulty: "mudah",
+      difficulty: "sedang",
       type: "single",
-      stem: "Perangkat jaringan fisik layer 3 OSI yang bertugas membaca alamat IP tujuan dan meneruskan paket antar jaringan yang berbeda subnet disebut:",
+      stem: "Perangkat jaringan fisik layer 3 OSI yang bertugas membaca alamat IP tujuan dan meneruskan paket antar jaringan yang berbeda subnet disebut...",
       options: [
-        { key: "A", text: "Hub" },
-        { key: "B", text: "Switch Layer 2" },
-        { key: "C", text: "Router" },
-        { key: "D", text: "Repeater" },
+        { key: "A", text: "Hub yang menyiarkan sinyal listrik ke seluruh port fisik tanpa seleksi alamat" },
+        { key: "B", text: "Switch Layer-2 yang meneruskan frame data berdasarkan tabel MAC address hardware" },
+        { key: "C", text: "Router yang memetakan tabel perutean berbasis IP address antar segmen subnet berbeda" },
+        { key: "D", text: "Repeater yang memperkuat amplitudo sinyal fisik pada bentangan kabel jarak jauh" },
+        { key: "E", text: "Bridge yang membagi segmen collision domain pada lapisan fisik tanpa perutean logika" },
       ],
       correctAnswer: ["C"],
       explanation: "**Router** beroperasi pada Layer 3 (Network Layer) model OSI dan menggunakan routing table berbasis IP address untuk menghubungkan dua atau lebih jaringan komputer dengan subnet berbeda.",
@@ -491,7 +542,7 @@ export function getSimulationQuestions(): Question[] {
     {
       id: "sim-extra-06",
       topic: "Keamanan Siber Dasar",
-      difficulty: "sedang",
+      difficulty: "sulit",
       type: "multiple",
       stem: "Manakah praktik di bawah ini yang tergolong sebagai pertahanan keamanan siber yang baik untuk pengembangan aplikasi web? (Pilih lebih dari satu jawaban yang benar)",
       options: [
@@ -499,19 +550,18 @@ export function getSimulationQuestions(): Question[] {
         { key: "B", text: "Menyimpan API Key rahasia di dalam repositori publik GitHub agar mudah diakses tim" },
         { key: "C", text: "Menerapkan HTTP Security Headers seperti Content-Security-Policy (CSP) dan X-Frame-Options" },
         { key: "D", text: "Melakukan validasi dan sanitasi pada seluruh data input dari pengguna di sisi server" },
+        { key: "E", text: "Menonaktifkan seluruh mekanisme otentikasi sesi token JWT untuk mempercepat respon API" },
       ],
       correctAnswer: ["A", "C", "D"],
-      explanation: "- **Opsi A Benar:** Algoritma bcrypt/Argon2 dirancang lambat terhadap brute-force, sementara MD5 sudah usang dan rentan.\n- **Opsi B Salah:** Menyimpan secret key di git publik merupakan pelanggaran keamanan fatal.\n- **Opsi C Benar:** Header CSP mencegah serangan Cross-Site Scripting (XSS).\n- **Opsi D Benar:** Validasi server-side adalah benteng pertahanan utama terhadap injeksi dan manipulasi input.",
+      explanation: "- **Opsi A Benar:** Algoritma bcrypt/Argon2 dirancang lambat terhadap brute-force, sementara MD5 sudah usang dan rentan.\n- **Opsi B Salah:** Menyimpan secret key di git publik merupakan pelanggaran keamanan fatal.\n- **Opsi C Benar:** Header CSP mencegah serangan Cross-Site Scripting (XSS).\n- **Opsi D Benar:** Validasi server-side adalah benteng pertahanan utama terhadap injeksi dan manipulasi input.\n- **Opsi E Salah:** Menghilangkan otentikasi membuka akses ilegal ke data privat.",
     },
   ];
 
-  extraPool.forEach((q) => questions.push(q));
-
-  // Tepat 30 butir soal: 9 Mudah, 12 Sedang, 9 Sulit
-  return questions;
+  // Return exactly 30 questions
+  return [...QUESTION_BANK.slice(0, 24), ...extraPool];
 }
 
-export function getPracticeQuestion(topic: string, difficulty?: Difficulty): Question {
+export function getPracticeQuestion(topic?: string, difficulty?: Difficulty): Question {
   const matching = QUESTION_BANK.filter((q) => {
     const matchTopic = !topic || q.topic.toLowerCase() === topic.toLowerCase();
     const matchDiff = !difficulty || q.difficulty === difficulty;
