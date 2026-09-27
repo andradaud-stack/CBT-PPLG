@@ -183,7 +183,7 @@ export function AnaliticaReviewStudio({
   };
 
   // Render text with code blocks & markdown bold
-  const renderFormattedText = (text: string) => {
+  const renderFormattedText = (text: string, isWhiteText = false) => {
     const parts = text.split(/(```[\s\S]*?```)/g);
 
     return parts.map((part, index) => {
@@ -206,7 +206,7 @@ export function AnaliticaReviewStudio({
       const formattedSubparts = part.split(/(\*\*.*?\*\*)/g).map((sub, sIndex) => {
         if (sub.startsWith("**") && sub.endsWith("**")) {
           return (
-            <strong key={sIndex} className="font-semibold text-on-surface">
+            <strong key={sIndex} className={`font-semibold ${isWhiteText ? "text-white" : "text-on-surface"}`}>
               {sub.slice(2, -2)}
             </strong>
           );
@@ -215,7 +215,7 @@ export function AnaliticaReviewStudio({
       });
 
       return (
-        <span key={index} className="whitespace-pre-line leading-relaxed">
+        <span key={index} className={`whitespace-pre-line leading-relaxed ${isWhiteText ? "text-white" : ""}`}>
           {formattedSubparts}
         </span>
       );
@@ -673,14 +673,16 @@ export function AnaliticaReviewStudio({
                           <div
                             className={`p-3 rounded-2xl max-w-[85%] text-body-xs leading-relaxed shadow-elevation-1 ${
                               msg.role === "user"
-                                ? "bg-primary text-on-primary rounded-tr-sm"
+                                ? "bg-primary text-white rounded-tr-sm"
                                 : "bg-surface-container-lowest border border-outline-variant text-on-surface rounded-tl-sm"
                             }`}
                           >
-                            <div>{renderFormattedText(msg.content)}</div>
+                            <div className={msg.role === "user" ? "text-white font-medium" : "text-on-surface"}>
+                              {renderFormattedText(msg.content, msg.role === "user")}
+                            </div>
                             <span
                               className={`block text-[10px] font-mono mt-1 text-right ${
-                                msg.role === "user" ? "text-on-primary/70" : "text-on-surface-variant/70"
+                                msg.role === "user" ? "text-white/80" : "text-on-surface-variant/70"
                               }`}
                             >
                               {msg.timestamp}

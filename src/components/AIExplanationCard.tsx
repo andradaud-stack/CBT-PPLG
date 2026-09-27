@@ -103,7 +103,7 @@ export function AIExplanationCard({
   };
 
   // Parse code blocks in markdown if present
-  const renderFormattedExplanation = (text: string) => {
+  const renderFormattedExplanation = (text: string, isWhiteText = false, textSizeClass = "text-body-md") => {
     const parts = text.split(/(```[\s\S]*?```)/g);
 
     return parts.map((part, index) => {
@@ -127,7 +127,7 @@ export function AIExplanationCard({
       const formattedSubparts = part.split(/(\*\*.*?\*\*)/g).map((sub, sIndex) => {
         if (sub.startsWith("**") && sub.endsWith("**")) {
           return (
-            <strong key={sIndex} className="font-semibold text-on-surface">
+            <strong key={sIndex} className={`font-semibold ${isWhiteText ? "text-white" : "text-on-surface"}`}>
               {sub.slice(2, -2)}
             </strong>
           );
@@ -136,7 +136,7 @@ export function AIExplanationCard({
       });
 
       return (
-        <p key={index} className="text-body-md text-on-surface-variant leading-relaxed whitespace-pre-line mb-space-xs">
+        <p key={index} className={`${textSizeClass} leading-relaxed whitespace-pre-line mb-space-xs ${isWhiteText ? "text-white" : "text-on-surface-variant"}`}>
           {formattedSubparts}
         </p>
       );
@@ -264,16 +264,22 @@ export function AIExplanationCard({
               {chatMessages.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`p-3 rounded-xl text-body-xs leading-relaxed ${
+                  className={`p-3 rounded-xl leading-relaxed shadow-elevation-1 ${
                     msg.role === "user"
-                      ? "bg-primary text-on-primary ml-6 rounded-tr-none font-medium"
+                      ? "bg-primary text-white ml-6 rounded-tr-none font-medium"
                       : "bg-surface-container-low border border-outline-variant text-on-surface mr-6 rounded-tl-none"
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 font-bold mb-1 text-[11px] font-mono opacity-80">
+                  <div
+                    className={`flex items-center gap-1.5 font-bold mb-1 text-[11px] font-mono ${
+                      msg.role === "user" ? "text-white" : "text-primary"
+                    }`}
+                  >
                     {msg.role === "user" ? "Anda" : "AI Tutor"}
                   </div>
-                  <div>{renderFormattedExplanation(msg.content)}</div>
+                  <div className={msg.role === "user" ? "text-white" : "text-on-surface"}>
+                    {renderFormattedExplanation(msg.content, msg.role === "user", "text-body-xs")}
+                  </div>
                 </div>
               ))}
 
