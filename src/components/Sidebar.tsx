@@ -18,11 +18,27 @@ import {
   Flame,
   Trophy,
   Bot,
+  PanelLeft,
+  PanelLeftClose,
 } from "lucide-react";
 import { getUserProfile } from "@/lib/storage";
 import { getAuthSession, logoutUser } from "@/lib/auth";
 import { getLearningGoals } from "@/lib/targets";
 import { UserProfile } from "@/types";
+
+export interface SidebarContextType {
+  isDesktopOpen: boolean;
+  setIsDesktopOpen: (open: boolean) => void;
+  toggleDesktopSidebar: () => void;
+}
+
+export const SidebarContext = React.createContext<SidebarContextType>({
+  isDesktopOpen: true,
+  setIsDesktopOpen: () => {},
+  toggleDesktopSidebar: () => {},
+});
+
+export const useSidebar = () => React.useContext(SidebarContext);
 
 interface SidebarProps {
   children?: React.ReactNode;
@@ -32,6 +48,7 @@ export function Sidebar({ children }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isDesktopOpen, setIsDesktopOpen] = useState(true);
   const [isDark, setIsDark] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [streak, setStreak] = useState(1);
@@ -55,6 +72,29 @@ export function Sidebar({ children }: SidebarProps) {
       window.removeEventListener("cendekia:goals-updated", updateProfileAndGoals);
     };
   }, []);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("cbt_desktop_sidebar_open");
+      if (saved !== null) {
+        setIsDesktopOpen(saved === "true");
+      }
+    } catch {
+      // Ignored
+    }
+  }, []);
+
+  const toggleDesktopSidebar = () => {
+    setIsDesktopOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("cbt_desktop_sidebar_open", String(next));
+      } catch {
+        // Ignored
+      }
+      return next;
+    });
+  };
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -107,15 +147,28 @@ export function Sidebar({ children }: SidebarProps) {
             </div>
           </Link>
 
-          {/* Close button for mobile drawer */}
-          <button
-            type="button"
-            onClick={() => setIsMobileOpen(false)}
-            className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
-            aria-label="Tutup Menu"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            {/* Close button for desktop */}
+            <button
+              type="button"
+              onClick={toggleDesktopSidebar}
+              className="hidden lg:flex p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0"
+              title="Tutup Menu Dashboard"
+              aria-label="Tutup Menu Dashboard"
+            >
+              <PanelLeftClose className="w-5 h-5" />
+            </button>
+
+            {/* Close button for mobile drawer */}
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen(false)}
+              className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0"
+              aria-label="Tutup Menu"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Navigation Section */}
@@ -225,79 +278,119 @@ export function Sidebar({ children }: SidebarProps) {
     </div>
   );
 
+  const isAiTutor = pathname === "/ai-tutor";
+
   return (
-    <div className="min-h-screen bg-surface flex flex-col lg:flex-row">
-      {/* Mobile Top Navigation Header */}
-      <header className="lg:hidden sticky top-0 z-30 bg-surface-container-lowest border-b border-outline-variant px-margin py-3 flex items-center justify-between shadow-elevation-1">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsMobileOpen(true)}
-            className="p-2 rounded-lg bg-surface-container-low border border-outline-variant text-on-surface hover:bg-surface-container transition-colors"
-            aria-label="Buka Menu Sidebar"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center font-bold text-title-md">
-              C
-            </div>
-            <span className="font-bold text-title-md text-on-surface tracking-tight">
-              CBT-PPLG
-            </span>
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-mono font-bold">
-            <Flame className="w-3.5 h-3.5 fill-amber-500" />
-            <span>{streak}h</span>
-          </div>
-          <button
-            type="button"
-            onClick={toggleDarkMode}
-            className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors"
-            aria-label="Toggle tema"
-          >
-            {isDark ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-secondary" />}
-          </button>
-          {profile && (
-            <Link
-              href="/profile"
-              title="Profil Siswa"
-              className="w-7 h-7 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-mono text-label-sm font-bold"
+    <SidebarContext.Provider
+      value={{
+        isDesktopOpen,
+        setIsDesktopOpen,
+        toggleDesktopSidebar,
+      }}
+    >
+      <div
+        className={`bg-surface flex flex-col lg:flex-row ${
+          isAiTutor ? "h-screen max-h-screen overflow-hidden" : "min-h-screen"
+        }`}
+      >
+        {/* Mobile Top Navigation Header */}
+        <header className="lg:hidden sticky top-0 z-30 bg-surface-container-lowest border-b border-outline-variant px-margin py-3 flex items-center justify-between shadow-elevation-1 shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen(true)}
+              className="p-2 rounded-lg bg-surface-container-low border border-outline-variant text-on-surface hover:bg-surface-container transition-colors"
+              aria-label="Buka Menu Sidebar"
             >
-              {profile.name.charAt(0)}
+              <Menu className="w-5 h-5" />
+            </button>
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary text-on-primary flex items-center justify-center font-bold text-title-md">
+                C
+              </div>
+              <span className="font-bold text-title-md text-on-surface tracking-tight">
+                CBT-PPLG
+              </span>
             </Link>
-          )}
-        </div>
-      </header>
+          </div>
 
-      {/* Desktop Fixed Sidebar (w-64) */}
-      <aside className="hidden lg:block w-64 h-screen sticky top-0 shrink-0 z-30">
-        {sidebarContent}
-      </aside>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-mono font-bold">
+              <Flame className="w-3.5 h-3.5 fill-amber-500" />
+              <span>{streak}h</span>
+            </div>
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors"
+              aria-label="Toggle tema"
+            >
+              {isDark ? <Sun className="w-4 h-4 text-warning" /> : <Moon className="w-4 h-4 text-secondary" />}
+            </button>
+            {profile && (
+              <Link
+                href="/profile"
+                title="Profil Siswa"
+                className="w-7 h-7 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-mono text-label-sm font-bold"
+              >
+                {profile.name.charAt(0)}
+              </Link>
+            )}
+          </div>
+        </header>
 
-      {/* Mobile Sliding Drawer Sidebar */}
-      {isMobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex animate-fadeIn">
-          {/* Backdrop overlay */}
-          <div
-            className="fixed inset-0 bg-on-surface/40 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsMobileOpen(false)}
-          />
-
-          {/* Drawer Content */}
-          <aside className="relative w-72 max-w-[85vw] h-full shadow-elevation-3 z-10 animate-slideRight">
+        {/* Desktop Fixed Collapsible Sidebar */}
+        <aside
+          className={`hidden lg:block h-screen sticky top-0 shrink-0 z-30 transition-all duration-300 ease-in-out ${
+            isDesktopOpen
+              ? "w-64 border-r border-outline-variant"
+              : "w-0 overflow-hidden border-r-0"
+          }`}
+        >
+          <div className="w-64 h-full">
             {sidebarContent}
-          </aside>
-        </div>
-      )}
+          </div>
+        </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {children}
+        {/* Floating toggle button when desktop sidebar is closed on other pages */}
+        {!isDesktopOpen && !isAiTutor && (
+          <div className="hidden lg:flex fixed top-3 left-3 z-40 animate-fadeIn">
+            <button
+              type="button"
+              onClick={toggleDesktopSidebar}
+              className="p-2 px-3 rounded-xl bg-surface-container-lowest border border-outline-variant shadow-elevation-2 hover:bg-surface-container text-on-surface hover:text-primary transition-all flex items-center gap-2 group"
+              title="Buka Menu Dashboard"
+              aria-label="Buka Menu Dashboard"
+            >
+              <PanelLeft className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold font-mono text-on-surface group-hover:text-primary">
+                Menu
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Sliding Drawer Sidebar */}
+        {isMobileOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex animate-fadeIn">
+            {/* Backdrop overlay */}
+            <div
+              className="fixed inset-0 bg-on-surface/40 backdrop-blur-sm transition-opacity"
+              onClick={() => setIsMobileOpen(false)}
+            />
+
+            {/* Drawer Content */}
+            <aside className="relative w-72 max-w-[85vw] h-full shadow-elevation-3 z-10 animate-slideRight">
+              {sidebarContent}
+            </aside>
+          </div>
+        )}
+
+        {/* Main Content Area */}
+        <div className={`flex-1 min-w-0 flex flex-col ${isAiTutor ? "h-full overflow-hidden" : ""}`}>
+          {children}
+        </div>
       </div>
-    </div>
+    </SidebarContext.Provider>
   );
 }

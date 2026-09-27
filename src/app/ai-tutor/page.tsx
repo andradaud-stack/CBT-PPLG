@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Sidebar } from "@/components/Sidebar";
+import { Sidebar, useSidebar } from "@/components/Sidebar";
 import {
   Bot,
   Send,
@@ -19,6 +19,7 @@ import {
   Search,
   Edit3,
   X,
+  LayoutDashboard,
 } from "lucide-react";
 import { getAuthSession } from "@/lib/auth";
 import { getUserProfile } from "@/lib/storage";
@@ -109,7 +110,8 @@ function createWelcomeMessage(studentName: string): ChatMessage {
   };
 }
 
-export default function AITutorPage() {
+function AITutorContent() {
+  const { isDesktopOpen, toggleDesktopSidebar } = useSidebar();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [isHistoryOpen, setIsHistoryOpen] = useState(true);
@@ -712,24 +714,23 @@ export default function AITutorPage() {
   };
 
   return (
-    <Sidebar>
-      <div className="flex-1 bg-surface flex h-screen overflow-hidden">
-        {/* ============================================================== */}
-        {/* CHATGPT-STYLE CONVERSATION HISTORY SIDEBAR                     */}
-        {/* ============================================================== */}
-        {/* Mobile Backdrop */}
-        {isHistoryOpen && (
-          <div
-            onClick={() => setIsHistoryOpen(false)}
-            className="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-xs animate-fadeIn"
-          />
-        )}
+    <div className="flex-1 bg-surface flex h-screen max-h-screen overflow-hidden">
+      {/* ============================================================== */}
+      {/* CHATGPT-STYLE CONVERSATION HISTORY SIDEBAR                     */}
+      {/* ============================================================== */}
+      {/* Mobile Backdrop */}
+      {isHistoryOpen && (
+        <div
+          onClick={() => setIsHistoryOpen(false)}
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden backdrop-blur-xs animate-fadeIn"
+        />
+      )}
 
-        <aside
-          className={`fixed lg:static top-0 bottom-0 left-0 z-40 lg:z-auto w-[280px] shrink-0 bg-surface-container-lowest border-r border-outline-variant flex flex-col h-full transition-transform duration-300 ease-in-out ${
-            isHistoryOpen ? "translate-x-0" : "-translate-x-full lg:hidden"
-          }`}
-        >
+      <aside
+        className={`fixed lg:sticky top-0 bottom-0 lg:bottom-auto left-0 z-40 lg:z-20 w-[280px] shrink-0 bg-surface-container-lowest border-r border-outline-variant flex flex-col h-screen max-h-screen transition-all duration-300 ease-in-out ${
+          isHistoryOpen ? "translate-x-0" : "-translate-x-full lg:hidden"
+        }`}
+      >
           {/* History Header & New Chat Button */}
           <div className="p-3 border-b border-outline-variant/70 space-y-2 shrink-0">
             <div className="flex items-center justify-between">
@@ -850,18 +851,46 @@ export default function AITutorPage() {
         {/* ============================================================== */}
         <div className="flex-1 flex flex-col h-full overflow-hidden min-w-0">
           {/* Top Header Bar */}
-          <header className="px-margin lg:px-space-md py-space-xs bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between shrink-0 shadow-elevation-1">
-            <div className="flex items-center gap-2.5 min-w-0">
-              {/* Toggle Sidebar Button */}
+          <header className="px-3 lg:px-4 py-2 bg-surface-container-lowest border-b border-outline-variant flex items-center justify-between shrink-0 shadow-elevation-1">
+            <div className="flex items-center gap-2 min-w-0">
+              {/* Toggle Dashboard Sidebar Button */}
+              <button
+                type="button"
+                onClick={toggleDesktopSidebar}
+                className={`p-2 rounded-xl border border-outline-variant hover:bg-surface-container transition-colors shrink-0 flex items-center gap-1.5 ${
+                  !isDesktopOpen
+                    ? "bg-primary text-on-primary font-bold shadow-elevation-1 border-primary"
+                    : "text-on-surface-variant hover:text-on-surface bg-surface-container-low"
+                }`}
+                title={isDesktopOpen ? "Tutup Sidebar Dashboard (CBT-PPLG)" : "Buka Sidebar Dashboard (CBT-PPLG)"}
+                aria-label="Toggle Sidebar Dashboard"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span className="hidden sm:inline text-xs font-mono font-medium">
+                  {isDesktopOpen ? "Tutup Menu" : "Buka Menu"}
+                </span>
+              </button>
+
+              {/* Toggle History Sidebar Button */}
               <button
                 type="button"
                 onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-                className="p-2 rounded-xl border border-outline-variant hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors shrink-0"
-                title={isHistoryOpen ? "Sembunyikan Riwayat" : "Buka Riwayat Percakapan"}
+                className={`p-2 rounded-xl border border-outline-variant hover:bg-surface-container transition-colors shrink-0 flex items-center gap-1.5 ${
+                  !isHistoryOpen
+                    ? "bg-tertiary-container text-on-tertiary-container border-tertiary/40 font-bold"
+                    : "text-on-surface-variant hover:text-on-surface bg-surface-container-low"
+                }`}
+                title={isHistoryOpen ? "Sembunyikan Riwayat Obrolan" : "Buka Riwayat Obrolan"}
                 aria-label="Toggle riwayat percakapan"
               >
                 <PanelLeft className="w-4 h-4" />
+                <span className="hidden sm:inline text-xs font-mono font-medium">
+                  {isHistoryOpen ? "Tutup Riwayat" : "Buka Riwayat"}
+                </span>
               </button>
+
+              {/* Divider */}
+              <div className="h-4 w-px bg-outline-variant shrink-0 mx-1 hidden sm:block" />
 
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -1083,6 +1112,13 @@ export default function AITutorPage() {
           </footer>
         </div>
       </div>
+  );
+}
+
+export default function AITutorPage() {
+  return (
+    <Sidebar>
+      <AITutorContent />
     </Sidebar>
   );
 }
