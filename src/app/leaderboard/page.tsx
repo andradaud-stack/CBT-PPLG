@@ -31,8 +31,8 @@ export default function LeaderboardPage() {
     async (isManual = false) => {
       if (isManual) setIsRefreshing(true);
       try {
-        const url = `/api/leaderboard?packageId=${packageFilter}&sort=${sortBy}`;
-        const res = await fetch(url);
+        const url = `/api/leaderboard?packageId=${packageFilter}&sort=${sortBy}&_t=${Date.now()}`;
+        const res = await fetch(url, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           setEntries(data.leaderboard || []);

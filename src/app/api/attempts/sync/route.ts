@@ -10,8 +10,9 @@ export async function GET(req: NextRequest) {
     const userId = searchParams.get("userId");
     const userName = searchParams.get("userName");
     const email = searchParams.get("email");
+    const getAll = searchParams.get("all") === "true";
 
-    if (!userId && !userName && !email) {
+    if (!userId && !userName && !email && !getAll) {
       return NextResponse.json(
         { success: false, error: "userId, userName, atau email harus disertakan" },
         { status: 400 }
@@ -26,33 +27,37 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Cari user ID jika diberikan email
-    let targetUserId = userId;
-    let targetUserName = userName;
-    if (email) {
-      const userRows = await query<Record<string, unknown>>(
-        "SELECT id, name FROM `users` WHERE `email` = ? LIMIT 1;",
-        [email]
-      );
-      if (userRows.length > 0) {
-        if (!targetUserId) targetUserId = String(userRows[0].id);
-        if (!targetUserName) targetUserName = String(userRows[0].name);
-      }
-    }
-
     // Ambil data attempt dari TiDB
     let sql = "SELECT * FROM `attempts` WHERE 1=0";
     const params: (string | number | boolean | null)[] = [];
 
-    if (targetUserId && targetUserName) {
-      sql = "SELECT * FROM `attempts` WHERE `user_id` = ? OR `user_name` = ? ORDER BY `created_at` DESC";
-      params.push(targetUserId, targetUserName);
-    } else if (targetUserId) {
-      sql = "SELECT * FROM `attempts` WHERE `user_id` = ? ORDER BY `created_at` DESC";
-      params.push(targetUserId);
-    } else if (targetUserName) {
-      sql = "SELECT * FROM `attempts` WHERE `user_name` = ? ORDER BY `created_at` DESC";
-      params.push(targetUserName);
+    if (getAll) {
+      sql = "SELECT * FROM `attempts` ORDER BY `created_at` DESC";
+    } else {
+      // Cari user ID jika diberikan email
+      let targetUserId = userId;
+      let targetUserName = userName;
+      if (email) {
+        const userRows = await query<Record<string, unknown>>(
+          "SELECT id, name FROM `users` WHERE `email` = ? LIMIT 1;",
+          [email]
+        );
+        if (userRows.length > 0) {
+          if (!targetUserId) targetUserId = String(userRows[0].id);
+          if (!targetUserName) targetUserName = String(userRows[0].name);
+        }
+      }
+
+      if (targetUserId && targetUserName) {
+        sql = "SELECT * FROM `attempts` WHERE `user_id` = ? OR `user_name` = ? ORDER BY `created_at` DESC";
+        params.push(targetUserId, targetUserName);
+      } else if (targetUserId) {
+        sql = "SELECT * FROM `attempts` WHERE `user_id` = ? ORDER BY `created_at` DESC";
+        params.push(targetUserId);
+      } else if (targetUserName) {
+        sql = "SELECT * FROM `attempts` WHERE `user_name` = ? ORDER BY `created_at` DESC";
+        params.push(targetUserName);
+      }
     }
 
     const rows = await query<Record<string, unknown>>(sql, params);

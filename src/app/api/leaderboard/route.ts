@@ -7,6 +7,9 @@ import { checkRateLimit, validateExamSubmission, sanitizeInput } from "@/lib/sec
 import { verifyExamSignature } from "@/lib/crypto";
 import { isTiDBConfigured, query, execute } from "@/lib/db/tidb";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const DATA_DIR = path.join(process.cwd(), "data");
 const LEADERBOARD_FILE = path.join(DATA_DIR, "leaderboard.json");
 
@@ -153,12 +156,19 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({
-      success: true,
-      totalParticipants: entries.length,
-      top3: entries.slice(0, 3),
-      leaderboard: entries,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        totalParticipants: entries.length,
+        top3: entries.slice(0, 3),
+        leaderboard: entries,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err) {
     console.error("Leaderboard GET error:", err);
     return NextResponse.json(

@@ -15,16 +15,52 @@ export async function GET() {
     }
 
     const rows = await query<Record<string, unknown>>(
-      `SELECT \`id\`, \`name\`, \`email\`, \`school\`, \`class_grade\` as classGrade, \`role\`, \`latest_irt_score\` as latestIrtScore, \`is_active\` as isActive, \`created_at\` as createdAt 
-       FROM \`users\` 
-       ORDER BY \`created_at\` DESC`
+      `SELECT 
+        u.\`id\`, 
+        u.\`name\`, 
+        u.\`email\`, 
+        u.\`school\`, 
+        u.\`class_grade\` as classGrade, 
+        u.\`role\`, 
+        u.\`latest_irt_score\` as latestIrtScore, 
+        u.\`is_active\` as isActive, 
+        u.\`created_at\` as createdAt,
+        CAST(COUNT(a.\`id\`) AS SIGNED) as totalAttempts,
+        CAST(COALESCE(ROUND(AVG(a.\`irt_score\`)), 0) AS SIGNED) as averageIrtScore,
+        CAST(COALESCE(MAX(a.\`irt_score\`), 0) AS SIGNED) as bestIrtScore
+      FROM \`users\` u
+      LEFT JOIN \`attempts\` a ON (a.\`user_id\` = u.\`id\` OR a.\`user_name\` = u.\`name\`)
+      GROUP BY u.\`id\`, u.\`name\`, u.\`email\`, u.\`school\`, u.\`class_grade\`, u.\`role\`, u.\`latest_irt_score\`, u.\`is_active\`, u.\`created_at\`
+      ORDER BY u.\`created_at\` DESC`
     );
 
-    return NextResponse.json({
-      success: true,
-      source: "tidb_serverless",
-      users: rows,
-    });
+    const formattedUsers = rows.map((r) => ({
+      id: String(r.id),
+      name: String(r.name),
+      email: String(r.email),
+      school: String(r.school || "SMK"),
+      classGrade: String(r.classGrade || "XII PPLG"),
+      role: String(r.role || "student"),
+      latestIrtScore: Number(r.latestIrtScore) || 0,
+      isActive: Boolean(r.isActive),
+      createdAt: String(r.createdAt),
+      totalAttempts: Number(r.totalAttempts) || 0,
+      averageIrtScore: Number(r.averageIrtScore) || 0,
+      bestIrtScore: Number(r.bestIrtScore) || 0,
+    }));
+
+    return NextResponse.json(
+      {
+        success: true,
+        source: "tidb_serverless",
+        users: formattedUsers,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (error: unknown) {
     const errorMsg = error instanceof Error ? error.message : "Gagal mengambil data user dari TiDB";
     console.error("[TiDB Users GET Error]:", errorMsg);

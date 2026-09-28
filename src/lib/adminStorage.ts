@@ -219,7 +219,7 @@ export function getAdminUsers(): AdminUserRecord[] {
 
   // Hitung metrik per user berdasarkan attempts
   const result: AdminUserRecord[] = Array.from(allUsersMap.values()).map((user) => {
-    const userAttempts = attempts.filter((a) => a.userId === user.id || a.userId === "user-default-1");
+    const userAttempts = attempts.filter((a) => a.userId === user.id);
     const scores = userAttempts.map((a) => a.irtResult?.score || 0).filter((s) => s > 0);
     const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
     const bestScore = scores.length ? Math.max(...scores) : 0;

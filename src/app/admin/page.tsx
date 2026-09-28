@@ -294,7 +294,13 @@ export default function AdminPage() {
             data.users.forEach((tu: AdminUserRecord) => {
               const key = tu.email.toLowerCase();
               if (mergedMap.has(key)) {
-                mergedMap.set(key, { ...mergedMap.get(key)!, ...tu });
+                mergedMap.set(key, {
+                  ...mergedMap.get(key)!,
+                  ...tu,
+                  totalAttempts: tu.totalAttempts !== undefined ? tu.totalAttempts : mergedMap.get(key)!.totalAttempts,
+                  averageIrtScore: tu.averageIrtScore !== undefined ? tu.averageIrtScore : mergedMap.get(key)!.averageIrtScore,
+                  bestIrtScore: tu.bestIrtScore !== undefined ? tu.bestIrtScore : mergedMap.get(key)!.bestIrtScore,
+                });
               } else {
                 mergedMap.set(key, {
                   ...tu,
@@ -305,6 +311,16 @@ export default function AdminPage() {
             });
             return Array.from(mergedMap.values());
           });
+        }
+      })
+      .catch(() => {});
+
+    // 3. Muat seluruh attempt riil dari cloud TiDB
+    fetch("/api/attempts/sync?all=true", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.attempts)) {
+          setAttempts(data.attempts);
         }
       })
       .catch(() => {});
@@ -2451,7 +2467,7 @@ export default function AdminPage() {
                   <h4 className="font-bold text-body-sm text-on-surface mb-2">Riwayat Ujian Simulasi:</h4>
                   <div className="space-y-2">
                     {attempts
-                      .filter((a) => a.userId === selectedStudentDetail.id || a.userId === "user-default-1")
+                      .filter((a) => a.userId === selectedStudentDetail.id)
                       .map((att) => (
                         <div key={att.id} className="p-2.5 rounded-xl border border-outline-variant bg-surface-container-low flex items-center justify-between">
                           <div>
