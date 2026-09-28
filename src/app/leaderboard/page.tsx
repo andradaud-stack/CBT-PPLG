@@ -239,8 +239,15 @@ export default function LeaderboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="h-24 rounded-t-xl bg-surface-container-low/40 border-t border-dashed border-outline-variant flex items-center justify-center text-[10px] text-on-surface-variant">
-                  Kosong
+                <div className="flex flex-col items-center opacity-60">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-outline-variant flex items-center justify-center text-sm mb-1 text-slate-500">
+                    🥈
+                  </div>
+                  <span className="font-semibold text-[11px] text-on-surface-variant">Slot Juara 2</span>
+                  <span className="text-[9px] text-on-surface-variant/70">Ayo Rebut!</span>
+                  <div className="w-full mt-1.5 h-16 rounded-t-xl bg-surface-container-low/40 border-t-2 border-dashed border-outline-variant/60 flex items-center justify-center text-[10px] text-on-surface-variant/80 font-mono">
+                    Tersedia
+                  </div>
                 </div>
               )}
 
@@ -261,8 +268,8 @@ export default function LeaderboardPage() {
                   <span className="font-bold text-xs sm:text-sm text-on-surface truncate max-w-[100px] sm:max-w-[140px] text-center">
                     {top1.name}
                   </span>
-                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-semibold truncate max-w-[100px] text-center">
-                    Juara 1 Nasional
+                  <span className="text-[10px] text-on-surface-variant truncate max-w-[100px] text-center">
+                    {top1.school.split(" ")[0]} {top1.school.split(" ")[1] || ""}
                   </span>
                   <div className="w-full mt-1.5 pt-3 pb-3.5 rounded-t-xl bg-gradient-to-b from-amber-500/20 to-amber-500/5 border-t-2 border-amber-400 dark:border-amber-500 text-center shadow-inner">
                     <span className="font-mono font-bold text-sm sm:text-base text-amber-600 dark:text-amber-400 block leading-tight">
@@ -302,8 +309,15 @@ export default function LeaderboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="h-20 rounded-t-xl bg-surface-container-low/40 border-t border-dashed border-outline-variant flex items-center justify-center text-[10px] text-on-surface-variant">
-                  Kosong
+                <div className="flex flex-col items-center opacity-60">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-dashed border-outline-variant flex items-center justify-center text-sm mb-1 text-amber-700">
+                    🥉
+                  </div>
+                  <span className="font-semibold text-[11px] text-on-surface-variant">Slot Juara 3</span>
+                  <span className="text-[9px] text-on-surface-variant/70">Tersedia</span>
+                  <div className="w-full mt-1.5 h-12 rounded-t-xl bg-surface-container-low/40 border-t-2 border-dashed border-outline-variant/60 flex items-center justify-center text-[10px] text-on-surface-variant/80 font-mono">
+                    Tersedia
+                  </div>
                 </div>
               )}
             </div>

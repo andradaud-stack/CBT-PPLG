@@ -10,93 +10,6 @@ import { isTiDBConfigured, query, execute } from "@/lib/db/tidb";
 const DATA_DIR = path.join(process.cwd(), "data");
 const LEADERBOARD_FILE = path.join(DATA_DIR, "leaderboard.json");
 
-const BENCHMARK_STUDENTS: LeaderboardEntry[] = [
-  {
-    id: "bench-1",
-    userId: "bench-user-1",
-    name: "Muhammad Fadhil",
-    school: "SMK Telkom Malang",
-    classGrade: "XII RPL 1",
-    score: 685,
-    theta: 1.45,
-    totalQuestions: 30,
-    totalCorrect: 27,
-    accuracy: 90,
-    durationSeconds: 1680,
-    packageId: 1,
-    packageName: "Simulasi TKA PPLG - Paket 1",
-    streak: 5,
-    submittedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-  {
-    id: "bench-2",
-    userId: "bench-user-2",
-    name: "Nabila Putri Maharani",
-    school: "SMKN 1 Cimahi",
-    classGrade: "XII SIJA",
-    score: 645,
-    theta: 1.12,
-    totalQuestions: 30,
-    totalCorrect: 25,
-    accuracy: 83,
-    durationSeconds: 1890,
-    packageId: 1,
-    packageName: "Simulasi TKA PPLG - Paket 1",
-    streak: 3,
-    submittedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-  {
-    id: "bench-3",
-    userId: "bench-user-3",
-    name: "Ahmad Rizky Pratama",
-    school: "SMKN 2 Surabaya",
-    classGrade: "XII RPL 2",
-    score: 615,
-    theta: 0.88,
-    totalQuestions: 30,
-    totalCorrect: 23,
-    accuracy: 77,
-    durationSeconds: 1740,
-    packageId: 1,
-    packageName: "Simulasi TKA PPLG - Paket 1",
-    streak: 4,
-    submittedAt: new Date(Date.now() - 3600000 * 9).toISOString(),
-  },
-  {
-    id: "bench-4",
-    userId: "bench-user-4",
-    name: "Siti Rahmawati",
-    school: "SMKN 2 Bandung",
-    classGrade: "XII RPL",
-    score: 580,
-    theta: 0.54,
-    totalQuestions: 30,
-    totalCorrect: 21,
-    accuracy: 70,
-    durationSeconds: 1950,
-    packageId: 1,
-    packageName: "Simulasi TKA PPLG - Paket 1",
-    streak: 2,
-    submittedAt: new Date(Date.now() - 3600000 * 14).toISOString(),
-  },
-  {
-    id: "bench-5",
-    userId: "bench-user-5",
-    name: "Dimas Arya Wicaksana",
-    school: "SMK Raden Umar Said Kudus",
-    classGrade: "XII PPLG",
-    score: 540,
-    theta: 0.22,
-    totalQuestions: 30,
-    totalCorrect: 19,
-    accuracy: 63,
-    durationSeconds: 2100,
-    packageId: 1,
-    packageName: "Simulasi TKA PPLG - Paket 1",
-    streak: 1,
-    submittedAt: new Date(Date.now() - 3600000 * 20).toISOString(),
-  },
-];
 
 async function loadLeaderboard(): Promise<LeaderboardEntry[]> {
   const realEntries: LeaderboardEntry[] = [];
@@ -168,11 +81,10 @@ async function loadLeaderboard(): Promise<LeaderboardEntry[]> {
     console.warn("Storage warning in leaderboard:", err);
   }
 
-  // 3. Gabungkan dengan benchmark siswa nasional
-  const combined = [...realEntries, ...BENCHMARK_STUDENTS];
+  // 3. Ambil percobaan terbaik per user per paket (hanya data siswa asli)
   const bestMap = new Map<string, LeaderboardEntry>();
 
-  for (const entry of combined) {
+  for (const entry of realEntries) {
     const key = `${entry.userId || entry.name}-${entry.packageId || 1}`;
     const existing = bestMap.get(key);
     if (!existing || entry.score > existing.score || (entry.score === existing.score && entry.durationSeconds < existing.durationSeconds)) {
