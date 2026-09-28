@@ -203,7 +203,83 @@ export default function LeaderboardPage() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-space-md items-end pt-8">
+            {/* Mobile Compact 3-Column Podium (< 768px) */}
+            <div className="grid grid-cols-3 md:hidden gap-1.5 items-end pt-6">
+              {/* Rank 2: Perak */}
+              <div className="bg-surface-container-lowest border-2 border-slate-300 dark:border-slate-600 rounded-xl p-2 text-center shadow-sm relative flex flex-col justify-between min-h-[145px]">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs border border-slate-300 shadow-sm">
+                  🥈
+                </div>
+                <div className="pt-3 space-y-0.5">
+                  <h3 className="font-bold text-xs text-on-surface truncate">
+                    {podiumTop3[1].name}
+                  </h3>
+                  <p className="text-[10px] text-on-surface-variant truncate">
+                    {podiumTop3[1].school.split(" ")[0]}
+                  </p>
+                </div>
+                <div className="pt-1 border-t border-outline-variant/60">
+                  <div className="font-mono text-sm font-bold text-slate-700 dark:text-slate-200">
+                    {podiumTop3[1].score}
+                  </div>
+                  <div className="text-[9px] font-mono text-on-surface-variant">
+                    {podiumTop3[1].accuracy}%
+                  </div>
+                </div>
+              </div>
+
+              {/* Rank 1: Emas (Center & Tallest) */}
+              <div className="bg-surface-container-lowest border-2 border-amber-400 dark:border-amber-500 rounded-xl p-2 text-center shadow-md relative flex flex-col justify-between min-h-[168px] bg-gradient-to-b from-amber-500/10 to-surface-container-lowest">
+                <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center font-bold text-sm border border-amber-300 shadow-md animate-bounce">
+                  👑
+                </div>
+                <div className="pt-3 space-y-0.5">
+                  <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400 uppercase">
+                    🥇 Juara 1
+                  </span>
+                  <h3 className="font-bold text-xs text-on-surface truncate">
+                    {podiumTop3[0].name}
+                  </h3>
+                  <p className="text-[10px] text-on-surface-variant truncate">
+                    {podiumTop3[0].school.split(" ")[0]}
+                  </p>
+                </div>
+                <div className="pt-1 border-t border-amber-400/40">
+                  <div className="font-mono text-base font-bold text-amber-500">
+                    {podiumTop3[0].score}
+                  </div>
+                  <div className="text-[9px] font-mono text-success font-semibold">
+                    {podiumTop3[0].accuracy}% Akurat
+                  </div>
+                </div>
+              </div>
+
+              {/* Rank 3: Perunggu */}
+              <div className="bg-surface-container-lowest border-2 border-amber-700/40 dark:border-amber-700/60 rounded-xl p-2 text-center shadow-sm relative flex flex-col justify-between min-h-[135px]">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-amber-700/20 text-amber-800 dark:text-amber-300 flex items-center justify-center font-bold text-xs border border-amber-700/40 shadow-sm">
+                  🥉
+                </div>
+                <div className="pt-3 space-y-0.5">
+                  <h3 className="font-bold text-xs text-on-surface truncate">
+                    {podiumTop3[2].name}
+                  </h3>
+                  <p className="text-[10px] text-on-surface-variant truncate">
+                    {podiumTop3[2].school.split(" ")[0]}
+                  </p>
+                </div>
+                <div className="pt-1 border-t border-outline-variant/60">
+                  <div className="font-mono text-sm font-bold text-amber-700 dark:text-amber-400">
+                    {podiumTop3[2].score}
+                  </div>
+                  <div className="text-[9px] font-mono text-on-surface-variant">
+                    {podiumTop3[2].accuracy}%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Detailed 3-Column Podium (>= 768px) */}
+            <div className="hidden md:grid md:grid-cols-3 gap-space-md items-end pt-8">
               {/* Rank 2: Perak (Left) */}
               <div className="bg-surface-container-lowest border-2 border-slate-300 dark:border-slate-600 rounded-2xl p-space-md text-center shadow-elevation-2 relative order-2 md:order-1 flex flex-col justify-between min-h-[220px]">
                 <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-title-md border-2 border-slate-300 dark:border-slate-500 shadow-elevation-1">
@@ -347,7 +423,7 @@ export default function LeaderboardPage() {
             </div>
           </div>
 
-          {/* Leaderboard Table Card */}
+          {/* Leaderboard Table & Mobile Card Card */}
           <div className="bg-surface-container-lowest border border-outline-variant rounded-2xl shadow-elevation-1 overflow-hidden">
             {isLoading ? (
               <div className="py-20 text-center space-y-3">
@@ -376,125 +452,210 @@ export default function LeaderboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-outline-variant bg-surface-container-low/50 text-[11px] font-mono text-on-surface-variant uppercase tracking-wider">
-                      <th className="py-3 px-space-md w-16 text-center">Rank</th>
-                      <th className="py-3 px-space-md">Peserta & Asal Sekolah</th>
-                      <th className="py-3 px-space-md hidden sm:table-cell">Paket Tryout</th>
-                      <th className="py-3 px-space-md text-center">Akurasi</th>
-                      <th className="py-3 px-space-md text-center hidden md:table-cell">Durasi</th>
-                      <th className="py-3 px-space-md text-right">Skor IRT</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-outline-variant/60 text-body-sm">
-                    {filteredEntries.map((entry, index) => {
-                      const rank = index + 1;
-                      const isMe =
-                        entry.userId === currentUser?.id ||
-                        (currentUser?.name && entry.name.toLowerCase() === currentUser.name.toLowerCase());
+              <>
+                {/* 1. Mobile-Optimized Card List (< 768px) */}
+                <div className="block md:hidden divide-y divide-outline-variant/60">
+                  {filteredEntries.map((entry, index) => {
+                    const rank = index + 1;
+                    const isMe =
+                      entry.userId === currentUser?.id ||
+                      (currentUser?.name && entry.name.toLowerCase() === currentUser.name.toLowerCase());
 
-                      return (
-                        <tr
-                          key={entry.id}
-                          className={`hover:bg-surface-container-low/50 transition-colors ${
-                            isMe ? "bg-primary/5 font-semibold" : ""
-                          }`}
-                        >
-                          {/* Rank Icon / Number */}
-                          <td className="py-3.5 px-space-md text-center">
+                    return (
+                      <div
+                        key={entry.id}
+                        className={`p-3 flex items-center justify-between gap-2.5 transition-colors ${
+                          isMe ? "bg-primary/10 border-l-4 border-l-primary" : ""
+                        }`}
+                      >
+                        {/* Left: Rank & Avatar & User Info */}
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                          <div className="w-6 text-center shrink-0">
                             {rank === 1 ? (
-                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-400 font-bold text-label-md">
-                                🥇
-                              </span>
+                              <span className="text-base">🥇</span>
                             ) : rank === 2 ? (
-                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-300/30 text-slate-700 dark:text-slate-300 font-bold text-label-md">
-                                🥈
-                              </span>
+                              <span className="text-base">🥈</span>
                             ) : rank === 3 ? (
-                              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-700/20 text-amber-700 dark:text-amber-400 font-bold text-label-md">
-                                🥉
-                              </span>
+                              <span className="text-base">🥉</span>
                             ) : (
-                              <span className="font-mono text-label-md text-on-surface-variant font-bold">
+                              <span className="font-mono text-xs font-bold text-on-surface-variant">
                                 #{rank}
                               </span>
                             )}
-                          </td>
+                          </div>
 
-                          {/* Name & School */}
-                          <td className="py-3.5 px-space-md">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-full bg-surface-container text-on-surface flex items-center justify-center font-bold text-label-sm shrink-0">
-                                {entry.name.charAt(0)}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="font-semibold text-on-surface truncate block">
-                                    {entry.name}
-                                  </span>
-                                  {isMe && (
-                                    <span className="px-1.5 py-0.2 rounded bg-primary text-white text-[10px] font-mono font-bold">
-                                      KAMU
-                                    </span>
-                                  )}
-                                  {entry.streak && entry.streak >= 3 && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold">
-                                      <Flame className="w-2.5 h-2.5 fill-amber-500" />
-                                      {entry.streak}h
-                                    </span>
-                                  )}
-                                </div>
-                                <span className="text-[11px] text-on-surface-variant truncate block">
-                                  {entry.school} &bull; {entry.classGrade}
+                          <div className="w-8 h-8 rounded-full bg-surface-container text-on-surface flex items-center justify-center font-bold text-xs shrink-0">
+                            {entry.name.charAt(0)}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-sm text-on-surface truncate">
+                                {entry.name}
+                              </span>
+                              {isMe && (
+                                <span className="px-1.5 py-0.2 rounded bg-primary text-white text-[9px] font-mono font-bold">
+                                  KAMU
                                 </span>
-                              </div>
+                              )}
                             </div>
-                          </td>
+                            <div className="flex items-center gap-1.5 text-[11px] text-on-surface-variant truncate">
+                              <span className="truncate">{entry.school}</span>
+                              <span>&bull;</span>
+                              <span className="font-mono shrink-0">P{entry.packageId}</span>
+                            </div>
+                          </div>
+                        </div>
 
-                          {/* Package */}
-                          <td className="py-3.5 px-space-md hidden sm:table-cell">
-                            <span className="text-body-xs font-mono text-on-surface-variant bg-surface-container-low px-2 py-1 rounded-md">
-                              Paket {entry.packageId}
-                            </span>
-                          </td>
-
-                          {/* Accuracy */}
-                          <td className="py-3.5 px-space-md text-center">
+                        {/* Right: Score & Accuracy */}
+                        <div className="text-right shrink-0">
+                          <div className="font-mono font-bold text-base text-primary leading-tight">
+                            {entry.score}
+                            <span className="text-[10px] font-normal text-on-surface-variant"> IRT</span>
+                          </div>
+                          <div className="flex items-center justify-end gap-1.5 mt-0.5">
                             <span
-                              className={`font-mono text-body-sm font-semibold ${
+                              className={`text-[10px] font-mono font-semibold px-1.5 py-0.2 rounded-full ${
                                 entry.accuracy >= 80
-                                  ? "text-success"
+                                  ? "bg-success/10 text-success"
                                   : entry.accuracy >= 65
-                                  ? "text-primary"
-                                  : "text-warning"
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-warning/10 text-warning"
                               }`}
                             >
                               {entry.accuracy}%
                             </span>
-                          </td>
-
-                          {/* Duration */}
-                          <td className="py-3.5 px-space-md text-center font-mono text-[12px] text-on-surface-variant hidden md:table-cell">
-                            {formatDuration(entry.durationSeconds)}
-                          </td>
-
-                          {/* Score */}
-                          <td className="py-3.5 px-space-md text-right">
-                            <span className="font-mono text-headline-sm font-bold text-primary block leading-none">
-                              {entry.score}
+                            <span className="text-[10px] font-mono text-on-surface-variant">
+                              {formatDuration(entry.durationSeconds)}
                             </span>
-                            <span className="font-mono text-[10px] text-on-surface-variant">
-                              &theta;: {entry.theta >= 0 ? `+${entry.theta.toFixed(2)}` : entry.theta.toFixed(2)}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 2. Desktop Table (>= 768px) */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-outline-variant bg-surface-container-low/50 text-[11px] font-mono text-on-surface-variant uppercase tracking-wider">
+                        <th className="py-3 px-space-md w-16 text-center">Rank</th>
+                        <th className="py-3 px-space-md">Peserta &amp; Asal Sekolah</th>
+                        <th className="py-3 px-space-md hidden sm:table-cell">Paket Tryout</th>
+                        <th className="py-3 px-space-md text-center">Akurasi</th>
+                        <th className="py-3 px-space-md text-center">Durasi</th>
+                        <th className="py-3 px-space-md text-right">Skor IRT</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/60 text-body-sm">
+                      {filteredEntries.map((entry, index) => {
+                        const rank = index + 1;
+                        const isMe =
+                          entry.userId === currentUser?.id ||
+                          (currentUser?.name && entry.name.toLowerCase() === currentUser.name.toLowerCase());
+
+                        return (
+                          <tr
+                            key={entry.id}
+                            className={`hover:bg-surface-container-low/50 transition-colors ${
+                              isMe ? "bg-primary/5 font-semibold" : ""
+                            }`}
+                          >
+                            {/* Rank Icon / Number */}
+                            <td className="py-3.5 px-space-md text-center">
+                              {rank === 1 ? (
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-400 font-bold text-label-md">
+                                  🥇
+                                </span>
+                              ) : rank === 2 ? (
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-300/30 text-slate-700 dark:text-slate-300 font-bold text-label-md">
+                                  🥈
+                                </span>
+                              ) : rank === 3 ? (
+                                <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-700/20 text-amber-700 dark:text-amber-400 font-bold text-label-md">
+                                  🥉
+                                </span>
+                              ) : (
+                                <span className="font-mono text-label-md text-on-surface-variant font-bold">
+                                  #{rank}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Name & School */}
+                            <td className="py-3.5 px-space-md">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-full bg-surface-container text-on-surface flex items-center justify-center font-bold text-label-sm shrink-0">
+                                  {entry.name.charAt(0)}
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-semibold text-on-surface truncate block">
+                                      {entry.name}
+                                    </span>
+                                    {isMe && (
+                                      <span className="px-1.5 py-0.2 rounded bg-primary text-white text-[10px] font-mono font-bold">
+                                        KAMU
+                                      </span>
+                                    )}
+                                    {entry.streak && entry.streak >= 3 && (
+                                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[10px] font-mono font-bold">
+                                        <Flame className="w-2.5 h-2.5 fill-amber-500" />
+                                        {entry.streak}h
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span className="text-[11px] text-on-surface-variant truncate block">
+                                    {entry.school} &bull; {entry.classGrade}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Package */}
+                            <td className="py-3.5 px-space-md hidden sm:table-cell">
+                              <span className="text-body-xs font-mono text-on-surface-variant bg-surface-container-low px-2 py-1 rounded-md">
+                                Paket {entry.packageId}
+                              </span>
+                            </td>
+
+                            {/* Accuracy */}
+                            <td className="py-3.5 px-space-md text-center">
+                              <span
+                                className={`font-mono text-body-sm font-semibold ${
+                                  entry.accuracy >= 80
+                                    ? "text-success"
+                                    : entry.accuracy >= 65
+                                    ? "text-primary"
+                                    : "text-warning"
+                                }`}
+                              >
+                                {entry.accuracy}%
+                              </span>
+                            </td>
+
+                            {/* Duration */}
+                            <td className="py-3.5 px-space-md text-center font-mono text-[12px] text-on-surface-variant">
+                              {formatDuration(entry.durationSeconds)}
+                            </td>
+
+                            {/* Score */}
+                            <td className="py-3.5 px-space-md text-right">
+                              <span className="font-mono text-headline-sm font-bold text-primary block leading-none">
+                                {entry.score}
+                              </span>
+                              <span className="font-mono text-[10px] text-on-surface-variant">
+                                &theta;: {entry.theta >= 0 ? `+${entry.theta.toFixed(2)}` : entry.theta.toFixed(2)}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </section>

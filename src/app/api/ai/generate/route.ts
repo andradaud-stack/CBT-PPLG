@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getPracticeQuestion, getSimulationQuestions } from "@/lib/questionBank";
 import { getPackageById, TRYOUT_PACKAGES } from "@/lib/tryoutPackages";
+import { getQuestionsForSubElement } from "@/lib/subElementQuestions";
 import { Question } from "@/types";
 import { checkRateLimit } from "@/lib/security";
 
@@ -9,15 +10,20 @@ const RequestSchema = z.object({
   mode: z.enum(["practice", "simulation"]).default("practice"),
   packageId: z.number().min(1).max(10).optional(),
   topic: z.string().optional(),
+  subElementId: z.string().optional(),
+  subElementName: z.string().optional(),
   difficulty: z.enum(["mudah", "sedang", "sulit"]).optional(),
-  type: z.enum(["single", "multiple"]).optional(),
+  type: z.enum(["single", "multiple", "boolean"]).optional(),
+  count: z.number().min(1).max(20).default(5).optional(),
 });
 
-const QuestionSchema = z.object({
+const QuestionItemSchema = z.object({
   id: z.string(),
   topic: z.string(),
+  subElementId: z.string().optional(),
+  subElementName: z.string().optional(),
   difficulty: z.enum(["mudah", "sedang", "sulit"]),
-  type: z.enum(["single", "multiple"]),
+  type: z.enum(["single", "multiple", "boolean"]),
   stem: z.string(),
   options: z.array(
     z.object({
@@ -30,7 +36,7 @@ const QuestionSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  // 1. Rate Limiting Defense (Mencegah DDoS & abuse token Groq)
+  // 1. Rate Limiting Defense
   const rateCheck = checkRateLimit(req, { keyPrefix: "ai-gen", limit: 30, windowMs: 60000 });
   if (!rateCheck.allowed) {
     return NextResponse.json(
@@ -60,14 +66,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { mode, packageId, topic, difficulty, type } = parseResult.data;
+    const { mode, packageId, topic, subElementId, subElementName, difficulty, count = 5 } = parseResult.data;
 
     // Skenario 1: Mode Simulasi TKA (10 Paket Tryout Berjenjang Resmi)
     if (mode === "simulation") {
       const selectedPkg = packageId ? getPackageById(packageId) : TRYOUT_PACKAGES[0];
       const pkgQuestions = selectedPkg ? selectedPkg.questions : getSimulationQuestions();
 
-      // Urutan soal diacak sedikit untuk keadilan ujian, namun paket soalnya tetap sesuai kurasi
       const shuffled = [...pkgQuestions].sort(() => Math.random() - 0.5);
 
       return NextResponse.json({
@@ -79,34 +84,42 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Skenario 2: Mode Latihan Bebas (Generate Soal via 9Router)
+    // Skenario 2: Mode Latihan Sub-Elemen / Latihan Bebas (Generate Soal via 9Router)
     const routerBase = process.env.ROUTER_API_BASE || "http://localhost:20128/v1";
     const routerKey = process.env.ROUTER_API_KEY || "sk-fdec9f6ad9f84ba4-6svwwa-1b77b208";
     const routerModel = process.env.ROUTER_MODEL || "ag/claude-sonnet-4-6";
 
+    const targetTopic = subElementName || topic || "Pemrograman Berorientasi Objek";
+
     try {
       const prompt = `Anda adalah pembuat soal ujian Tes Kemampuan Akademik (TKA) resmi Kemendikdasmen untuk SMK jurusan PPLG (Pengembangan Perangkat Lunak dan Gim).
-Buatkan 1 butir soal baru berkualitas tinggi dengan kriteria:
-- Topik: ${topic || "Pemrograman Dasar"}
+Buatkan ${count} butir soal HOTS baru berkualitas tinggi dengan kriteria:
+- Sub-Elemen / Topik: ${targetTopic}
 - Tingkat Kesulitan: ${difficulty || "sedang"}
-- Tipe Soal: ${type || "single"} (jika multiple, sertakan keterangan 'Pilih lebih dari satu...')
+- Standar: Standar kelulusan SMK PPLG, studi kasus industri riil, kode rapi jika ada program, 5 pilihan jawaban (A, B, C, D, E) dengan panjang yang seimbang, tidak mudah ditebak.
+- Format tipe: dominan "single" (pilihan ganda 1 jawaban benar) atau "multiple" (pilih lebih dari 1) atau "boolean" (Benar/Salah).
 
-Berikan respon HANYA berupa JSON murni tanpa markdown pembungkus dengan format:
-{
-  "id": "ai-${Date.now()}",
-  "topic": "${topic || "Pemrograman Dasar"}",
-  "difficulty": "${difficulty || "sedang"}",
-  "type": "${type || "single"}",
-  "stem": "Teks pertanyaan jelas dan akademis, sertakan cuplikan kode jika relevan",
-  "options": [
-    { "key": "A", "text": "opsi A" },
-    { "key": "B", "text": "opsi B" },
-    { "key": "C", "text": "opsi C" },
-    { "key": "D", "text": "opsi D" }
-  ],
-  "correctAnswer": ["kunci"],
-  "explanation": "Penjelasan mendalam mengapa jawaban tersebut benar dan konsep teoritis di baliknya"
-}`;
+Berikan respon HANYA berupa JSON array murni tanpa markdown pembungkus (tanpa \`\`\`json) dengan format array of objects:
+[
+  {
+    "id": "ai-${Date.now()}-1",
+    "topic": "${targetTopic}",
+    "subElementId": "${subElementId || ""}",
+    "subElementName": "${subElementName || targetTopic}",
+    "difficulty": "${difficulty || "sedang"}",
+    "type": "single",
+    "stem": "Teks studi kasus atau pertanyaan jelas. Jika ada kode program, gunakan format indented dengan baris baru yang rapi.",
+    "options": [
+      { "key": "A", "text": "opsi A dengan penjelasan teknis seimbang" },
+      { "key": "B", "text": "opsi B dengan penjelasan teknis seimbang" },
+      { "key": "C", "text": "opsi C dengan penjelasan teknis seimbang" },
+      { "key": "D", "text": "opsi D dengan penjelasan teknis seimbang" },
+      { "key": "E", "text": "opsi E dengan penjelasan teknis seimbang" }
+    ],
+    "correctAnswer": ["A"],
+    "explanation": "Penjelasan mendalam mengapa jawaban tersebut benar dan konsep teoritis di baliknya"
+  }
+]`;
 
       const res = await fetch(`${routerBase}/chat/completions`, {
         method: "POST",
@@ -117,10 +130,10 @@ Berikan respon HANYA berupa JSON murni tanpa markdown pembungkus dengan format:
         body: JSON.stringify({
           model: routerModel,
           messages: [{ role: "user", content: prompt }],
-          max_tokens: 1000,
+          max_tokens: 2500,
           stream: false,
         }),
-        signal: AbortSignal.timeout(18000),
+        signal: AbortSignal.timeout(20000),
       });
 
       if (res.ok) {
@@ -131,12 +144,21 @@ Berikan respon HANYA berupa JSON murni tanpa markdown pembungkus dengan format:
         if (rawContent) {
           const cleaned = rawContent.replace(/```json/g, "").replace(/```/g, "").trim();
           const parsed = JSON.parse(cleaned);
-          const validated = QuestionSchema.safeParse(parsed);
-          if (validated.success) {
+          const questionArray = Array.isArray(parsed) ? parsed : [parsed];
+          const validatedList: Question[] = [];
+
+          for (const item of questionArray) {
+            const val = QuestionItemSchema.safeParse(item);
+            if (val.success) {
+              validatedList.push(val.data as Question);
+            }
+          }
+
+          if (validatedList.length > 0) {
             return NextResponse.json({
               success: true,
               source: routerModel,
-              questions: [validated.data],
+              questions: validatedList.slice(0, count),
             });
           }
         }
@@ -145,17 +167,34 @@ Berikan respon HANYA berupa JSON murni tanpa markdown pembungkus dengan format:
       console.warn("9Router generation error, falling back to curated bank:", routerErr);
     }
 
-    // Fallback otomatis ke bank soal terkurasi
-    const selected = getPracticeQuestion(topic || "Pemrograman Dasar", difficulty);
-    const dynamicQuestion: Question = {
-      ...selected,
-      id: `q-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    };
+    // Fallback otomatis ke bank soal sub-elemen atau kurasi
+    let fallbackQuestions: Question[] = [];
+    if (subElementId) {
+      const fromSub = getQuestionsForSubElement(subElementId);
+      if (fromSub && fromSub.length > 0) {
+        fallbackQuestions = [...fromSub];
+      }
+    }
+
+    if (fallbackQuestions.length === 0) {
+      const selected = getPracticeQuestion(targetTopic, difficulty);
+      fallbackQuestions = [selected];
+    }
+
+    // Pastikan ID unik dan jumlah sesuai permintaan
+    const resultQuestions: Question[] = [];
+    for (let i = 0; i < count; i++) {
+      const baseQ = fallbackQuestions[i % fallbackQuestions.length];
+      resultQuestions.push({
+        ...baseQ,
+        id: `${baseQ.id || "gen"}-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+      });
+    }
 
     return NextResponse.json({
       success: true,
       source: "curated-bank",
-      questions: [dynamicQuestion],
+      questions: resultQuestions,
     });
   } catch (error) {
     console.error("API Error in /api/ai/generate:", error);

@@ -221,7 +221,12 @@ export default function DashboardPage() {
                 const isNotAttempted = item.totalAnswered === 0;
 
                 return (
-                  <div key={item.topic} className="space-y-1">
+                  <Link
+                    key={item.topic}
+                    href={`/practice?subElement=${encodeURIComponent(item.topic)}`}
+                    className="block p-2 -mx-2 rounded-xl hover:bg-surface-container transition-colors group space-y-1.5"
+                    title={`Klik untuk latihan & pelajari ${item.topic}`}
+                  >
                     <div className="flex items-center justify-between text-body-sm">
                       <div className="flex items-center gap-1.5 truncate max-w-[65%]">
                         {item.elementId && (
@@ -229,7 +234,9 @@ export default function DashboardPage() {
                             E{item.elementId}
                           </span>
                         )}
-                        <span className="font-medium text-on-surface truncate">{item.topic}</span>
+                        <span className="font-medium text-on-surface truncate group-hover:text-primary transition-colors">
+                          {item.topic}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 font-mono text-label-sm shrink-0">
                         <span className="text-on-surface-variant">
@@ -246,6 +253,9 @@ export default function DashboardPage() {
                         >
                           {item.masteryLevel}
                         </span>
+                        <span className="hidden sm:inline-block text-[11px] text-primary opacity-0 group-hover:opacity-100 transition-opacity font-semibold">
+                          Latih &rarr;
+                        </span>
                       </div>
                     </div>
 
@@ -257,12 +267,12 @@ export default function DashboardPage() {
                             ? "bg-transparent"
                             : isMastered
                             ? "bg-success"
-                            : "bg-primary"
+                            : "bg-[#e91e63]"
                         }`}
                         style={{ width: `${isNotAttempted ? 0 : Math.max(5, item.accuracy)}%` }}
                       />
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>

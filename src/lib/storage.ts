@@ -11,6 +11,7 @@ import {
   TopicSpeedMetric,
   UserProfile,
 } from "@/types";
+import { evaluateAnswer } from "@/lib/irt";
 
 const STORAGE_KEYS = {
   USER_PROFILE: "cendekia_user_profile",
@@ -396,6 +397,8 @@ export function saveAttempt(attempt: Attempt): void {
           addQuestionToRemedial(q, ans?.selectedAnswers || []);
         }
       });
+      // Sinkronisasi kemajuan 14 sub-elemen dari hasil pengerjaan soal ujian ini
+      updateTopicProgressFromAttempt(attempt);
     }
 
     // Background sync ke TiDB Serverless jika tersedia (tanpa memblokir UI)
@@ -651,21 +654,175 @@ export async function deleteAiSessionFromCloud(sessionId: string, userId?: strin
   }
 }
 
+const SUB_ELEMENT_TOPIC_MAP: Record<string, string> = {
+  // Mapping topik umum dan variasi nama ke 14 sub-elemen resmi
+  "wawasan dunia kerja bidang pplg": "Profesi dan Kewirausahaan PPLG",
+  "profesi dan kewirausahaan pplg": "Profesi dan Kewirausahaan PPLG",
+  "profesi dan kewirausahaan": "Profesi dan Kewirausahaan PPLG",
+  "manajemen proyek dan budaya mutu": "Manajemen Proyek dan Budaya Mutu",
+  "manajemen proyek": "Manajemen Proyek dan Budaya Mutu",
+  "k3lh dan budaya kerja profesional": "K3LH dan Budaya Kerja Profesional",
+  "k3lh dan budaya kerja": "K3LH dan Budaya Kerja Profesional",
+  "kecakapan kerja dasar": "K3LH dan Budaya Kerja Profesional",
+  "pengelolaan aset dan lingkungan kerja": "Pengelolaan Aset dan Lingkungan Kerja",
+  "pengelolaan aset": "Pengelolaan Aset dan Lingkungan Kerja",
+  "arsitektur komputer dan sistem operasi": "Arsitektur Komputer dan Sistem Operasi",
+  "arsitektur sistem dan perangkat keras": "Arsitektur Komputer dan Sistem Operasi",
+  "sistem operasi": "Arsitektur Komputer dan Sistem Operasi",
+  "jaringan komputer dan protokol komunikasi": "Jaringan Komputer dan Protokol Komunikasi",
+  "jaringan komputer dan komunikasi data": "Jaringan Komputer dan Protokol Komunikasi",
+  "jaringan dan protokol": "Jaringan Komputer dan Protokol Komunikasi",
+  "keamanan informasi dan kriptografi dasar": "Keamanan Informasi dan Kriptografi Dasar",
+  "keamanan informasi dan privasi": "Keamanan Informasi dan Kriptografi Dasar",
+  "keamanan dan privasi": "Keamanan Informasi dan Kriptografi Dasar",
+  "algoritma pemrograman dan kompleksitas": "Algoritma Pemrograman dan Kompleksitas",
+  "algoritma dan struktur data": "Algoritma Pemrograman dan Kompleksitas",
+  "struktur data": "Algoritma Pemrograman dan Kompleksitas",
+  "pemrograman dasar dan struktur kendali": "Pemrograman Dasar dan Struktur Kendali",
+  "pemrograman terstruktur": "Pemrograman Dasar dan Struktur Kendali",
+  "pemrograman dasar": "Pemrograman Dasar dan Struktur Kendali",
+  "konsep oop dan enkapsulasi": "Konsep OOP dan Enkapsulasi",
+  "pemrograman berorientasi objek": "Konsep OOP dan Enkapsulasi",
+  "oop dan enkapsulasi": "Konsep OOP dan Enkapsulasi",
+  "inheritance dan hierarki objek": "Inheritance dan Hierarki Objek",
+  "inheritance dan hierarki": "Inheritance dan Hierarki Objek",
+  "polymorphism dan dynamic dispatch": "Polymorphism dan Dynamic Dispatch",
+  "polymorphism": "Polymorphism dan Dynamic Dispatch",
+  "polimorfisme": "Polymorphism dan Dynamic Dispatch",
+  "perancangan basis data relasional": "Perancangan Basis Data Relasional",
+  "basis data relasional": "Perancangan Basis Data Relasional",
+  "basis data": "Perancangan Basis Data Relasional",
+  "query sql dan manipulasi data relasional": "Query SQL dan Manipulasi Data Relasional",
+  "query sql": "Query SQL dan Manipulasi Data Relasional",
+  "manipulasi data": "Query SQL dan Manipulasi Data Relasional",
+  "version control system dan kolaborasi tim": "Version Control System dan Kolaborasi Tim",
+  "version control system": "Version Control System dan Kolaborasi Tim",
+  "git dan version control": "Version Control System dan Kolaborasi Tim",
+};
+
+export function findMatchingSubElement(topicOrName: string, list: TopicProgress[]): TopicProgress | null {
+  const norm = topicOrName.toLowerCase().trim();
+  
+  // 1. Direct match on topic
+  let found = list.find((t) => t.topic.toLowerCase().trim() === norm);
+  if (found) return found;
+
+  // 2. Map through dictionary
+  const mappedName = SUB_ELEMENT_TOPIC_MAP[norm];
+  if (mappedName) {
+    found = list.find((t) => t.topic.toLowerCase().trim() === mappedName.toLowerCase().trim());
+    if (found) return found;
+  }
+
+  // 3. Partial inclusion match
+  for (const item of list) {
+    const itemNorm = item.topic.toLowerCase().trim();
+    if (itemNorm.includes(norm) || norm.includes(itemNorm)) {
+      return item;
+    }
+  }
+
+  return null;
+}
+
+export function recomputeTopicProgressFromAttempts(): TopicProgress[] {
+  if (!isClient()) return DEFAULT_TOPIC_PROGRESS;
+  try {
+    const attempts = getAttempts();
+    const list: TopicProgress[] = DEFAULT_TOPIC_PROGRESS.map((item) => ({
+      ...item,
+      totalAnswered: 0,
+      totalCorrect: 0,
+      accuracy: 0,
+      masteryLevel: "Belum Dicoba",
+    }));
+
+    if (!attempts || attempts.length === 0) {
+      localStorage.setItem(STORAGE_KEYS.TOPIC_PROGRESS, JSON.stringify(list));
+      return list;
+    }
+
+    // Hitung akumulasi dari semua pengerjaan soal
+    for (const att of attempts) {
+      if (!att.questions || !att.answers) continue;
+      for (const q of att.questions) {
+        const studentAns = att.answers[q.id];
+        if (!studentAns || !studentAns.isAnswered) continue;
+
+        const isCorrect = evaluateAnswer(q, studentAns);
+        const subName = (q as { subElementName?: string }).subElementName || q.topic;
+        const target = findMatchingSubElement(subName, list);
+
+        if (target) {
+          target.totalAnswered += 1;
+          if (isCorrect) target.totalCorrect += 1;
+          target.accuracy = Math.round((target.totalCorrect / target.totalAnswered) * 100);
+          target.masteryLevel = computeMasteryLevel(target.accuracy, target.totalAnswered);
+        }
+      }
+    }
+
+    localStorage.setItem(STORAGE_KEYS.TOPIC_PROGRESS, JSON.stringify(list));
+    return list;
+  } catch (err) {
+    console.error("Error recomputing topic progress:", err);
+    return DEFAULT_TOPIC_PROGRESS;
+  }
+}
+
+export function updateTopicProgressFromAttempt(attempt: Attempt): void {
+  if (!isClient() || !attempt.questions || !attempt.answers) return;
+  try {
+    const list = getTopicProgress();
+    let changed = false;
+
+    for (const q of attempt.questions) {
+      const studentAns = attempt.answers[q.id];
+      if (!studentAns || !studentAns.isAnswered) continue;
+
+      const isCorrect = evaluateAnswer(q, studentAns);
+      const subName = (q as { subElementName?: string }).subElementName || q.topic;
+      const target = findMatchingSubElement(subName, list);
+
+      if (target) {
+        target.totalAnswered += 1;
+        if (isCorrect) target.totalCorrect += 1;
+        target.accuracy = Math.round((target.totalCorrect / target.totalAnswered) * 100);
+        target.masteryLevel = computeMasteryLevel(target.accuracy, target.totalAnswered);
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      localStorage.setItem(STORAGE_KEYS.TOPIC_PROGRESS, JSON.stringify(list));
+    }
+  } catch (err) {
+    console.error("Error updating topic progress from attempt:", err);
+  }
+}
+
 export function getTopicProgress(): TopicProgress[] {
   if (!isClient()) return DEFAULT_TOPIC_PROGRESS;
   purgeLegacyMockData();
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.TOPIC_PROGRESS);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.TOPIC_PROGRESS, JSON.stringify(DEFAULT_TOPIC_PROGRESS));
-      return DEFAULT_TOPIC_PROGRESS;
+      return recomputeTopicProgressFromAttempts();
     }
     const list: TopicProgress[] = JSON.parse(raw);
-    // Pastikan jika panjangnya bukan 14, kembalikan default 14 sub-elemen
     if (!Array.isArray(list) || list.length !== 14) {
-      localStorage.setItem(STORAGE_KEYS.TOPIC_PROGRESS, JSON.stringify(DEFAULT_TOPIC_PROGRESS));
-      return DEFAULT_TOPIC_PROGRESS;
+      return recomputeTopicProgressFromAttempts();
     }
+
+    // Jika seluruhnya 0 tapi ada pengerjaan attempt di memori, sinkronkan otomatis!
+    const totalAnsweredAll = list.reduce((sum, item) => sum + item.totalAnswered, 0);
+    if (totalAnsweredAll === 0) {
+      const attempts = getAttempts();
+      if (attempts.length > 0) {
+        return recomputeTopicProgressFromAttempts();
+      }
+    }
+
     return list;
   } catch {
     return DEFAULT_TOPIC_PROGRESS;
@@ -676,29 +833,18 @@ export function updateTopicProgress(topic: PPLGTopic | string, isCorrect: boolea
   if (!isClient()) return;
   try {
     const list = getTopicProgress();
-    const item = list.find((t) => t.topic.toLowerCase() === topic.toLowerCase());
+    const item = findMatchingSubElement(topic, list);
     if (item) {
       item.totalAnswered += 1;
       if (isCorrect) item.totalCorrect += 1;
       item.accuracy = Math.round((item.totalCorrect / item.totalAnswered) * 100);
       item.masteryLevel = computeMasteryLevel(item.accuracy, item.totalAnswered);
-    } else {
-      const newItem: TopicProgress = {
-        topic: topic as PPLGTopic,
-        totalAnswered: 1,
-        totalCorrect: isCorrect ? 1 : 0,
-        accuracy: isCorrect ? 100 : 0,
-        masteryLevel: isCorrect ? "Dikuasai" : "Perlu Diulang",
-      };
-      list.push(newItem);
+      localStorage.setItem(STORAGE_KEYS.TOPIC_PROGRESS, JSON.stringify(list));
     }
-    localStorage.setItem(STORAGE_KEYS.TOPIC_PROGRESS, JSON.stringify(list));
   } catch (err) {
     console.error("Error updating topic progress:", err);
   }
 }
-
-import { evaluateAnswer } from "@/lib/irt";
 
 export function computeMasteryLevel(accuracy: number, totalAnswered: number): MasteryLevel {
   if (totalAnswered === 0) return "Belum Dicoba";
