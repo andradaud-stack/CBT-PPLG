@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { getAuthSession, updateUserProfile, logoutUser } from "@/lib/auth";
-import { getAttempts, getTopicProgress, getUserProfile } from "@/lib/storage";
+import { getAttempts, getTopicProgress, getUserProfile, syncAttemptsFromServer } from "@/lib/storage";
 import { UserProfile, Attempt, TopicProgress } from "@/types";
 import {
   User,
@@ -63,6 +63,15 @@ export default function ProfilePage() {
     setAttempts(userAttempts);
     setTopicProgress(getTopicProgress());
     setGoals(getLearningGoals());
+
+    // Auto-sync attempts dari TiDB cloud
+    syncAttemptsFromServer().then((synced) => {
+      if (synced && synced.length > 0) {
+        setAttempts(synced);
+        const updated = getAuthSession().user || getUserProfile();
+        setProfile(updated);
+      }
+    });
   }, []);
 
   const handleSave = (e: React.FormEvent) => {

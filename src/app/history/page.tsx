@@ -9,6 +9,7 @@ import {
   getUserProfile,
   resetAllDataToZero,
   getTopicSpeedMetrics,
+  syncAttemptsFromServer,
 } from "@/lib/storage";
 import { Attempt, TopicProgress, UserProfile, TopicSpeedMetric } from "@/types";
 import {
@@ -46,6 +47,14 @@ export default function HistoryProgressPage() {
     setTopicProgress(getTopicProgress());
     setProfile(getUserProfile());
     setSpeedMetrics(getTopicSpeedMetrics());
+
+    // Auto-sync attempts dari TiDB cloud Serverless
+    syncAttemptsFromServer().then((synced) => {
+      if (synced && synced.length > 0) {
+        setAttempts(synced);
+        setProfile(getUserProfile());
+      }
+    });
   }, []);
 
   const handleResetData = () => {

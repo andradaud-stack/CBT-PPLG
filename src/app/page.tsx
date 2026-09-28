@@ -11,6 +11,7 @@ import {
   getRemedialQueue,
   getDaysSinceLastActive,
   touchLastActiveTime,
+  syncAttemptsFromServer,
 } from "@/lib/storage";
 import { getAuthSession } from "@/lib/auth";
 import { Attempt, TopicProgress, UserProfile } from "@/types";
@@ -34,12 +35,22 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const session = getAuthSession();
-    setProfile(session.user || getUserProfile());
+    const currentUser = session.user || getUserProfile();
+    setProfile(currentUser);
     setTopicProgress(getTopicProgress());
     setAttempts(getAttempts());
     setRemedialCount(getRemedialQueue().length);
     setDaysAway(getDaysSinceLastActive());
     touchLastActiveTime();
+
+    // Auto-sync attempts dari cloud database TiDB Serverless (antar-perangkat)
+    syncAttemptsFromServer().then((synced) => {
+      if (synced && synced.length > 0) {
+        setAttempts(synced);
+        const updatedSession = getAuthSession();
+        setProfile(updatedSession.user || getUserProfile());
+      }
+    });
   }, []);
 
   const latestScore = profile?.latestIrtScore ?? 0;

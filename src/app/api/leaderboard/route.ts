@@ -5,6 +5,7 @@ import { z } from "zod";
 import { LeaderboardEntry } from "@/types";
 import { checkRateLimit, validateExamSubmission, sanitizeInput } from "@/lib/security";
 import { verifyExamSignature } from "@/lib/crypto";
+import { isTiDBConfigured, query, execute } from "@/lib/db/tidb";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const LEADERBOARD_FILE = path.join(DATA_DIR, "leaderboard.json");
@@ -16,12 +17,76 @@ let inMemoryLeaderboard: LeaderboardEntry[] = [];
 const SEED_LEADERBOARD: LeaderboardEntry[] = [];
 
 async function loadLeaderboard(): Promise<LeaderboardEntry[]> {
+  // 1. Prioritaskan data cloud TiDB Serverless (persisten lintas lambda & perangkat)
+  if (isTiDBConfigured()) {
+    try {
+      const rows = await query<Record<string, unknown>>(`
+        SELECT 
+          a.id,
+          a.user_id as userId,
+          COALESCE(u.name, a.user_name) as name,
+          COALESCE(u.school, 'SMK Negeri 2 Semarang') as school,
+          COALESCE(u.class_grade, 'XII PPLG') as classGrade,
+          a.irt_score as score,
+          0 as theta,
+          a.total_questions as totalQuestions,
+          a.correct_count as totalCorrect,
+          ROUND((a.correct_count / a.total_questions) * 100) as accuracy,
+          a.duration_seconds as durationSeconds,
+          CAST(a.package_id AS SIGNED) as packageId,
+          a.package_title as packageName,
+          1 as streak,
+          a.created_at as submittedAt
+        FROM \`attempts\` a
+        LEFT JOIN \`users\` u ON a.user_id = u.id OR a.user_name = u.name
+        ORDER BY a.irt_score DESC, a.duration_seconds ASC;
+      `);
+
+      if (Array.isArray(rows) && rows.length > 0) {
+        const dbEntries: LeaderboardEntry[] = rows.map((r) => ({
+          id: String(r.id),
+          userId: String(r.userId),
+          name: String(r.name || "Siswa"),
+          school: String(r.school || "SMK"),
+          classGrade: String(r.classGrade || "XII PPLG"),
+          score: Number(r.score || 0),
+          theta: Number(r.theta || 0),
+          totalQuestions: Number(r.totalQuestions || 30),
+          totalCorrect: Number(r.totalCorrect || 0),
+          accuracy: Number(r.accuracy || 0),
+          durationSeconds: Number(r.durationSeconds || 0),
+          packageId: Number(r.packageId || 1),
+          packageName: String(r.packageName || "Paket Tryout"),
+          streak: Number(r.streak || 1),
+          submittedAt: String(r.submittedAt || new Date().toISOString()),
+        }));
+
+        // Deduplikasi: Ambil percobaan terbaik per user per paket
+        const bestMap = new Map<string, LeaderboardEntry>();
+        for (const entry of dbEntries) {
+          const key = `${entry.userId}-${entry.packageId}`;
+          const existing = bestMap.get(key);
+          if (!existing || entry.score > existing.score || (entry.score === existing.score && entry.durationSeconds < existing.durationSeconds)) {
+            bestMap.set(key, entry);
+          }
+        }
+
+        const uniqueEntries = Array.from(bestMap.values());
+        inMemoryLeaderboard = uniqueEntries;
+        return uniqueEntries;
+      }
+    } catch (err) {
+      console.warn("[Leaderboard TiDB Query Fallback]:", err);
+    }
+  }
+
+  // 2. Fallback file lokal / in-memory
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
     try {
       const data = await fs.readFile(LEADERBOARD_FILE, "utf-8");
       const parsed: LeaderboardEntry[] = JSON.parse(data);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && parsed.length > 0) {
         inMemoryLeaderboard = parsed;
         return parsed;
       }
@@ -29,14 +94,13 @@ async function loadLeaderboard(): Promise<LeaderboardEntry[]> {
       // File not found or empty, initialize seed
     }
 
-    await fs.writeFile(LEADERBOARD_FILE, JSON.stringify(SEED_LEADERBOARD, null, 2), "utf-8");
-    inMemoryLeaderboard = SEED_LEADERBOARD;
+    if (inMemoryLeaderboard.length > 0) {
+      return inMemoryLeaderboard;
+    }
+
     return SEED_LEADERBOARD;
   } catch (err) {
     console.warn("Storage warning in leaderboard, using in-memory:", err);
-    if (inMemoryLeaderboard.length === 0) {
-      inMemoryLeaderboard = SEED_LEADERBOARD;
-    }
     return inMemoryLeaderboard;
   }
 }
@@ -224,6 +288,14 @@ export async function POST(req: NextRequest) {
     });
 
     await saveLeaderboard(entries);
+
+    // Update TiDB users table latest_irt_score jika tersedia
+    if (isTiDBConfigured() && sub.userId && sub.score > 0) {
+      execute(
+        "UPDATE `users` SET `latest_irt_score` = ? WHERE `id` = ? AND (`latest_irt_score` IS NULL OR `latest_irt_score` < ?)",
+        [sub.score, sub.userId, sub.score]
+      ).catch(() => {});
+    }
 
     // Cari posisi rank siswa
     const currentRank = entries.findIndex((e) => e.userId === sub.userId && e.packageId === sub.packageId) + 1;

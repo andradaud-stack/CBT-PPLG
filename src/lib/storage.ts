@@ -414,6 +414,89 @@ export function saveAttempt(attempt: Attempt): void {
   }
 }
 
+/**
+ * Sinkronisasi data riwayat ujian (attempts) dari database cloud TiDB Serverless.
+ * Memungkinkan riwayat pengerjaan tetap tersinkronisasi lintas perangkat (misal: dikerjakan di laptop, langsung muncul di HP).
+ */
+export async function syncAttemptsFromServer(): Promise<Attempt[]> {
+  if (!isClient()) return getAttempts();
+  try {
+    let user = getUserProfile();
+    try {
+      const rawSession = localStorage.getItem("cbt_pplg_session");
+      if (rawSession) {
+        const parsed = JSON.parse(rawSession);
+        if (parsed?.user) user = parsed.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!user || (!user.id && !user.name && !user.email)) {
+      return getAttempts();
+    }
+
+    const params = new URLSearchParams();
+    if (user.id && user.id !== "user-default-1") params.append("userId", user.id);
+    if (user.name) params.append("userName", user.name);
+    if (user.email) params.append("email", user.email);
+
+    if (!params.toString()) {
+      return getAttempts();
+    }
+
+    const res = await fetch(`/api/attempts/sync?${params.toString()}`);
+    if (!res.ok) return getAttempts();
+
+    const data = await res.json();
+    if (data.success && Array.isArray(data.attempts) && data.attempts.length > 0) {
+      const serverAttempts: Attempt[] = data.attempts;
+      const localAttempts = getAttempts();
+
+      const mergedMap = new Map<string, Attempt>();
+      for (const a of serverAttempts) {
+        mergedMap.set(a.id, a);
+      }
+      for (const a of localAttempts) {
+        if (a.questions && a.questions.length > 0) {
+          mergedMap.set(a.id, a);
+        } else if (!mergedMap.has(a.id)) {
+          mergedMap.set(a.id, a);
+        }
+      }
+
+      const mergedList = Array.from(mergedMap.values());
+      mergedList.sort((a, b) => new Date(b.finishedAt).getTime() - new Date(a.finishedAt).getTime());
+
+      localStorage.setItem(STORAGE_KEYS.ATTEMPTS, JSON.stringify(mergedList));
+
+      // Sinkronisasi nilai IRT tertinggi ke profil
+      const maxIrt = Math.max(...mergedList.map((a) => a.irtResult?.score || 0), 0);
+      if (maxIrt > (user.latestIrtScore || 0)) {
+        user.latestIrtScore = maxIrt;
+        saveUserProfile(user);
+        try {
+          const rawSession = localStorage.getItem("cbt_pplg_session");
+          if (rawSession) {
+            const parsed = JSON.parse(rawSession);
+            if (parsed?.user) {
+              parsed.user.latestIrtScore = maxIrt;
+              localStorage.setItem("cbt_pplg_session", JSON.stringify(parsed));
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      return mergedList;
+    }
+  } catch (err) {
+    console.warn("[syncAttemptsFromServer error]:", err);
+  }
+  return getAttempts();
+}
+
 export function getTopicProgress(): TopicProgress[] {
   if (!isClient()) return DEFAULT_TOPIC_PROGRESS;
   purgeLegacyMockData();

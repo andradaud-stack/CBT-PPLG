@@ -24,6 +24,7 @@ import {
   getRegisteredUsersAsync,
   syncLocalUsersToCloud,
 } from "@/lib/auth";
+import { syncAttemptsFromServer } from "@/lib/storage";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -76,10 +77,13 @@ export default function LoginPage() {
     try {
       const result = await loginUserAsync(loginEmail, loginPassword);
       if (result.success) {
-        setSuccessMsg("Berhasil masuk! Mengalihkan ke Dashboard...");
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 500);
+        setSuccessMsg("Berhasil masuk! Mensinkronisasi data...");
+        try {
+          await syncAttemptsFromServer();
+        } catch {
+          // ignore
+        }
+        window.location.href = "/";
       } else {
         setErrorMsg(result.message);
         setIsLoading(false);

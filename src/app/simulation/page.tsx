@@ -406,9 +406,12 @@ export default function SimulationPage() {
     const now = new Date();
     const durationSeconds = Math.round((now.getTime() - new Date(startedAt).getTime()) / 1000);
 
+    const user = getAuthSession().user || getUserProfile();
+    const submissionUserId = user.id || "siswa-" + Date.now();
+
     const newAttempt: Attempt = {
       id: `attempt-${Date.now()}`,
-      userId: "user-default-1",
+      userId: submissionUserId,
       mode: "simulation",
       packageId: selectedPackageId,
       packageName: selectedPackage.title,
@@ -428,9 +431,7 @@ export default function SimulationPage() {
 
     // Sync to Shared Global Leaderboard API
     try {
-      const user = getAuthSession().user || getUserProfile();
       const goals = getLearningGoals();
-      const submissionUserId = user.id || "siswa-" + Date.now();
       const signature = createExamSignature({
         userId: submissionUserId,
         packageId: selectedPackageId,
