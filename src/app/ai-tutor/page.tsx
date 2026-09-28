@@ -20,9 +20,16 @@ import {
   Edit3,
   X,
   LayoutDashboard,
+  Cloud,
+  RefreshCw,
 } from "lucide-react";
 import { getAuthSession } from "@/lib/auth";
-import { getUserProfile } from "@/lib/storage";
+import {
+  getUserProfile,
+  syncAiSessionsFromServer,
+  saveAiSessionToCloud,
+  deleteAiSessionFromCloud,
+} from "@/lib/storage";
 
 export interface ChatMessage {
   id: string;
@@ -123,6 +130,9 @@ function AITutorContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const [userName, setUserName] = useState("Siswa");
+  const [userId, setUserId] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [isSyncingCloud, setIsSyncingCloud] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -132,7 +142,11 @@ function AITutorContent() {
     const session = getAuthSession();
     const profile = session.user || getUserProfile();
     const displayName = profile?.name ? profile.name.split(" ")[0] : "Siswa";
+    const currentUserId = profile?.id || "";
+    const currentUserEmail = profile?.email || "";
     setUserName(displayName);
+    setUserId(currentUserId);
+    setUserEmail(currentUserEmail);
 
     let loadedSessions: ChatSession[] = [];
 
@@ -189,7 +203,43 @@ function AITutorContent() {
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       setIsHistoryOpen(false);
     }
+
+    // Sinkronisasi otomatis dengan Cloud TiDB Serverless
+    if (currentUserId || currentUserEmail) {
+      setIsSyncingCloud(true);
+      syncAiSessionsFromServer()
+        .then((merged) => {
+          if (merged && merged.length > 0) {
+            setSessions(merged);
+            setActiveSessionId((prevActive) => {
+              if (merged.some((s) => s.id === prevActive)) return prevActive;
+              return merged[0].id;
+            });
+          }
+        })
+        .catch((err) => console.warn("[AI sync error]:", err))
+        .finally(() => setIsSyncingCloud(false));
+    }
   }, []);
+
+  // Handle Manual Sync Button
+  const handleManualSync = async () => {
+    setIsSyncingCloud(true);
+    try {
+      const merged = await syncAiSessionsFromServer();
+      if (merged && merged.length > 0) {
+        setSessions(merged);
+        setActiveSessionId((prevActive) => {
+          if (merged.some((s) => s.id === prevActive)) return prevActive;
+          return merged[0].id;
+        });
+      }
+    } catch (err) {
+      console.warn("Manual sync error:", err);
+    } finally {
+      setIsSyncingCloud(false);
+    }
+  };
 
   // 2. Persist sessions to localStorage whenever sessions change
   useEffect(() => {
@@ -258,6 +308,8 @@ function AITutorContent() {
 
     if (!window.confirm(`Hapus ${title} dari riwayat?`)) return;
 
+    deleteAiSessionFromCloud(sessionId, userId);
+
     setSessions((prev) => {
       const filtered = prev.filter((s) => s.id !== sessionId);
       if (filtered.length === 0) {
@@ -294,6 +346,12 @@ function AITutorContent() {
     setActiveSessionId(fresh.id);
     localStorage.removeItem(STORAGE_KEY_SESSIONS);
     sessionStorage.removeItem(LEGACY_STORAGE_KEY);
+
+    if (userId) {
+      fetch(`/api/ai/sessions?clearAll=true&userId=${encodeURIComponent(userId)}`, {
+        method: "DELETE",
+      }).catch(() => {});
+    }
   };
 
   // Handle Start Rename Session
@@ -309,9 +367,20 @@ function AITutorContent() {
       setEditingSessionId(null);
       return;
     }
+    const trimmed = editingTitle.trim();
+    let updatedSession: ChatSession | null = null;
     setSessions((prev) =>
-      prev.map((s) => (s.id === sessionId ? { ...s, title: editingTitle.trim() } : s))
+      prev.map((s) => {
+        if (s.id === sessionId) {
+          updatedSession = { ...s, title: trimmed, updatedAt: new Date().toISOString() };
+          return updatedSession;
+        }
+        return s;
+      })
     );
+    if (updatedSession) {
+      saveAiSessionToCloud(updatedSession, userId, userEmail);
+    }
     setEditingSessionId(null);
   };
 
@@ -331,20 +400,18 @@ function AITutorContent() {
     const newTitle = isFirstUserMessage ? generateTitleFromPrompt(text) : activeSession.title;
 
     const updatedMessages = [...activeSession.messages, userMessage];
+    const optimisticSession: ChatSession = {
+      ...activeSession,
+      title: newTitle,
+      messages: updatedMessages,
+      updatedAt: new Date().toISOString(),
+    };
 
     // Optimistically update session
     setSessions((prev) =>
-      prev.map((s) =>
-        s.id === activeSession.id
-          ? {
-              ...s,
-              title: newTitle,
-              messages: updatedMessages,
-              updatedAt: new Date().toISOString(),
-            }
-          : s
-      )
+      prev.map((s) => (s.id === activeSession.id ? optimisticSession : s))
     );
+    saveAiSessionToCloud(optimisticSession, userId, userEmail);
 
     setInputMessage("");
     setIsLoading(true);
@@ -371,17 +438,17 @@ function AITutorContent() {
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
 
+        const finalSession: ChatSession = {
+          ...activeSession,
+          title: newTitle,
+          messages: [...updatedMessages, assistantReply],
+          updatedAt: new Date().toISOString(),
+        };
+
         setSessions((prev) =>
-          prev.map((s) =>
-            s.id === activeSession.id
-              ? {
-                  ...s,
-                  messages: [...s.messages, assistantReply],
-                  updatedAt: new Date().toISOString(),
-                }
-              : s
-          )
+          prev.map((s) => (s.id === activeSession.id ? finalSession : s))
         );
+        saveAiSessionToCloud(finalSession, userId, userEmail);
       } else {
         const err = await res.json().catch(() => ({}));
         const errorReply: ChatMessage = {
@@ -392,13 +459,16 @@ function AITutorContent() {
           }`,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         };
+        const errorSession: ChatSession = {
+          ...activeSession,
+          title: newTitle,
+          messages: [...updatedMessages, errorReply],
+          updatedAt: new Date().toISOString(),
+        };
         setSessions((prev) =>
-          prev.map((s) =>
-            s.id === activeSession.id
-              ? { ...s, messages: [...s.messages, errorReply], updatedAt: new Date().toISOString() }
-              : s
-          )
+          prev.map((s) => (s.id === activeSession.id ? errorSession : s))
         );
+        saveAiSessionToCloud(errorSession, userId, userEmail);
       }
     } catch {
       const offlineReply: ChatMessage = {
@@ -408,13 +478,16 @@ function AITutorContent() {
           "⚠️ **Koneksi Terputus**: Tidak dapat terhubung ke server AI CBT-PPLG. Silakan periksa jaringan internet Anda.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
+      const offlineSession: ChatSession = {
+        ...activeSession,
+        title: newTitle,
+        messages: [...updatedMessages, offlineReply],
+        updatedAt: new Date().toISOString(),
+      };
       setSessions((prev) =>
-        prev.map((s) =>
-          s.id === activeSession.id
-            ? { ...s, messages: [...s.messages, offlineReply], updatedAt: new Date().toISOString() }
-            : s
-        )
+        prev.map((s) => (s.id === activeSession.id ? offlineSession : s))
       );
+      saveAiSessionToCloud(offlineSession, userId, userEmail);
     } finally {
       setIsLoading(false);
     }
@@ -740,15 +813,27 @@ function AITutorContent() {
                 </div>
                 <span className="font-bold text-body-sm text-on-surface">Riwayat Tutor</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsHistoryOpen(false)}
-                className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
-                title="Tutup Riwayat"
-                aria-label="Tutup panel riwayat"
-              >
-                <PanelLeftClose className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleManualSync}
+                  disabled={isSyncingCloud}
+                  className="p-1.5 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors disabled:opacity-50"
+                  title="Sinkronkan dengan Cloud TiDB"
+                  aria-label="Sinkronkan chat dengan cloud"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? "animate-spin text-primary" : ""}`} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="p-1.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors"
+                  title="Tutup Riwayat"
+                  aria-label="Tutup panel riwayat"
+                >
+                  <PanelLeftClose className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* + Obrolan Baru Button (Prominent ChatGPT Style) */}
@@ -832,17 +917,38 @@ function AITutorContent() {
           </div>
 
           {/* History Footer Actions */}
-          <div className="p-2.5 border-t border-outline-variant/70 bg-surface-container-low flex items-center justify-between text-[11px] font-mono text-on-surface-variant shrink-0">
-            <span>{sessions.length} Obrolan Tersimpan</span>
-            <button
-              type="button"
-              onClick={handleClearAllSessions}
-              className="text-red-600 hover:underline flex items-center gap-1 font-semibold"
-              title="Hapus semua riwayat percakapan"
-            >
-              <Trash2 className="w-3 h-3" />
-              <span>Hapus Semua</span>
-            </button>
+          <div className="p-2.5 border-t border-outline-variant/70 bg-surface-container-low flex flex-col gap-1.5 text-[11px] font-mono text-on-surface-variant shrink-0">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-sans text-xs font-medium">
+                <Cloud className="w-3.5 h-3.5" />
+                <span>Cloud Sync TiDB</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleClearAllSessions}
+                className="text-red-600 hover:underline flex items-center gap-1 font-semibold"
+                title="Hapus semua riwayat percakapan"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>Hapus Semua</span>
+              </button>
+            </div>
+            <div className="flex items-center justify-between text-[10px] text-on-surface-variant/70">
+              <span>{sessions.length} Obrolan tersimpan</span>
+              {isSyncingCloud ? (
+                <span className="text-primary flex items-center gap-1 font-sans">
+                  <RefreshCw className="w-2.5 h-2.5 animate-spin" /> Sinkronisasi...
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleManualSync}
+                  className="hover:text-primary transition-colors flex items-center gap-1 font-sans"
+                >
+                  <RefreshCw className="w-2.5 h-2.5" /> Sinkron sekarang
+                </button>
+              )}
+            </div>
           </div>
         </aside>
 

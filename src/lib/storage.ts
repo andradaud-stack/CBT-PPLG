@@ -1,6 +1,7 @@
 import {
   Attempt,
   BookmarkedQuestion,
+  ChatSession,
   MasteryLevel,
   PPLGTopic,
   Question,
@@ -20,6 +21,7 @@ const STORAGE_KEYS = {
   BOOKMARKS: "cendekia_bookmarked_questions",
   SPEED_LOGS: "cendekia_speed_logs",
   LAST_ACTIVE_TIME: "cendekia_last_active_time",
+  AI_SESSIONS: "cbt_ai_tutor_sessions_v2",
 };
 
 const DEFAULT_USER: UserProfile = {
@@ -495,6 +497,158 @@ export async function syncAttemptsFromServer(): Promise<Attempt[]> {
     console.warn("[syncAttemptsFromServer error]:", err);
   }
   return getAttempts();
+}
+
+/**
+ * Sinkronisasi seluruh sesi percakapan AI Tutor dari database cloud TiDB.
+ * Menggabungkan sesi lokal dan cloud sehingga chat di laptop otomatis muncul di HP dan sebaliknya.
+ */
+export async function syncAiSessionsFromServer(): Promise<ChatSession[]> {
+  if (!isClient()) return [];
+  try {
+    let user = getUserProfile();
+    try {
+      const rawSession = localStorage.getItem("cbt_pplg_session");
+      if (rawSession) {
+        const parsed = JSON.parse(rawSession);
+        if (parsed?.user) user = parsed.user;
+      }
+    } catch {
+      // ignore
+    }
+
+    if (!user || (!user.id && !user.email)) {
+      return getLocalAiSessions();
+    }
+
+    const params = new URLSearchParams();
+    if (user.id && user.id !== "user-default-1") params.append("userId", user.id);
+    if (user.email) params.append("email", user.email);
+
+    if (!params.toString()) {
+      return getLocalAiSessions();
+    }
+
+    const res = await fetch(`/api/ai/sessions?${params.toString()}`);
+    if (!res.ok) return getLocalAiSessions();
+
+    const data = await res.json();
+    const serverSessions: ChatSession[] = (data.success && Array.isArray(data.sessions)) ? data.sessions : [];
+    const localSessions: ChatSession[] = getLocalAiSessions();
+
+    const mergedMap = new Map<string, ChatSession>();
+
+    // 1. Masukkan server sessions
+    for (const s of serverSessions) {
+      mergedMap.set(s.id, s);
+    }
+
+    // 2. Gabungkan local sessions (jika lokal memiliki pesan lebih banyak atau lebih baru, atau belum ada di server)
+    const sessionsToUpload: ChatSession[] = [];
+    for (const localS of localSessions) {
+      const serverS = mergedMap.get(localS.id);
+      if (!serverS) {
+        // Sesi ini ada di lokal (misal di laptop) tapi belum di-upload ke TiDB!
+        mergedMap.set(localS.id, localS);
+        // Hanya upload jika sesi memiliki pesan nyata dari pengguna
+        if (localS.messages && localS.messages.some((m) => m.role === "user")) {
+          sessionsToUpload.push(localS);
+        }
+      } else {
+        // Jika lokal memiliki pesan lebih baru atau lebih banyak
+        const localTime = new Date(localS.updatedAt || localS.createdAt || 0).getTime();
+        const serverTime = new Date(serverS.updatedAt || serverS.createdAt || 0).getTime();
+        if (localTime > serverTime || (localS.messages?.length || 0) > (serverS.messages?.length || 0)) {
+          mergedMap.set(localS.id, localS);
+          sessionsToUpload.push(localS);
+        }
+      }
+    }
+
+    const mergedList = Array.from(mergedMap.values());
+    mergedList.sort((a, b) => new Date(b.updatedAt || b.createdAt || 0).getTime() - new Date(a.updatedAt || a.createdAt || 0).getTime());
+
+    // Simpan hasil gabungan ke localStorage perangkat ini
+    if (mergedList.length > 0) {
+      localStorage.setItem(STORAGE_KEYS.AI_SESSIONS, JSON.stringify(mergedList));
+    }
+
+    // Jika ada sesi lokal yang belum ada di cloud, upload ke server di background
+    if (sessionsToUpload.length > 0 && (user.id || user.email)) {
+      fetch("/api/ai/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user.id || undefined,
+          email: user.email,
+          sessions: sessionsToUpload,
+        }),
+      }).catch((e) => console.warn("[Auto-upload AI sessions error]:", e));
+    }
+
+    return mergedList;
+  } catch (err) {
+    console.warn("[syncAiSessionsFromServer error]:", err);
+    return getLocalAiSessions();
+  }
+}
+
+export function getLocalAiSessions(): ChatSession[] {
+  if (!isClient()) return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.AI_SESSIONS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+export async function saveAiSessionToCloud(session: ChatSession, userId?: string, email?: string): Promise<void> {
+  if (!isClient()) return;
+  try {
+    let uid = userId;
+    let uemail = email;
+    if (!uid || !uemail) {
+      const profile = getUserProfile();
+      uid = uid || profile.id;
+      uemail = uemail || profile.email;
+    }
+    if (!uid && !uemail) return;
+
+    fetch("/api/ai/sessions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: uid,
+        email: uemail,
+        session,
+      }),
+    }).catch(() => {});
+  } catch (err) {
+    console.warn("[saveAiSessionToCloud error]:", err);
+  }
+}
+
+export async function deleteAiSessionFromCloud(sessionId: string, userId?: string): Promise<void> {
+  if (!isClient() || !sessionId) return;
+  try {
+    let uid = userId;
+    if (!uid) {
+      const profile = getUserProfile();
+      uid = profile.id;
+    }
+    if (!uid) return;
+
+    fetch(`/api/ai/sessions?id=${encodeURIComponent(sessionId)}&userId=${encodeURIComponent(uid)}`, {
+      method: "DELETE",
+    }).catch(() => {});
+  } catch (err) {
+    console.warn("[deleteAiSessionFromCloud error]:", err);
+  }
 }
 
 export function getTopicProgress(): TopicProgress[] {

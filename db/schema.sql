@@ -125,6 +125,19 @@ CREATE TABLE IF NOT EXISTS `announcements` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 9. TABEL RIWAYAT CHAT AI TUTOR (Sinkronisasi Multi-Device)
+CREATE TABLE IF NOT EXISTS `ai_chat_sessions` (
+  `id` VARCHAR(128) NOT NULL,
+  `user_id` VARCHAR(64) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `messages` JSON NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `idx_ai_sessions_user_id` (`user_id`),
+  INDEX `idx_ai_sessions_updated_at` (`updated_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ==============================================================================
 -- DEFAULT SEED DATA
 -- ==============================================================================
