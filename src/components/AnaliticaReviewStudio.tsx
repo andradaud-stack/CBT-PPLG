@@ -21,6 +21,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { isQuestionBookmarked, toggleBookmark } from "@/lib/storage";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface AnaliticaReviewStudioProps {
   questions: Question[];
@@ -598,7 +599,7 @@ export function AnaliticaReviewStudio({
                       Rangkuman Penjelasan Resmi:
                     </span>
                     <div className="text-body-sm text-on-surface leading-relaxed">
-                      {renderFormattedText(currentQ.explanation)}
+                      <MarkdownRenderer content={currentQ.explanation} />
                     </div>
                   </div>
                 </div>
@@ -678,7 +679,7 @@ export function AnaliticaReviewStudio({
                             }`}
                           >
                             <div className={msg.role === "user" ? "text-white font-medium" : "text-on-surface"}>
-                              {renderFormattedText(msg.content, msg.role === "user")}
+                              <MarkdownRenderer content={msg.content} isUser={msg.role === "user"} />
                             </div>
                             <span
                               className={`block text-[10px] font-mono mt-1 text-right ${

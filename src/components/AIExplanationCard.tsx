@@ -12,6 +12,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { AIIdentifierChip } from "./AIIdentifierChip";
+import { MarkdownRenderer } from "./MarkdownRenderer";
 import { Question } from "@/types";
 
 interface AIExplanationCardProps {
@@ -102,47 +103,6 @@ export function AIExplanationCard({
     }
   };
 
-  // Parse code blocks in markdown if present
-  const renderFormattedExplanation = (text: string, isWhiteText = false, textSizeClass = "text-body-md") => {
-    const parts = text.split(/(```[\s\S]*?```)/g);
-
-    return parts.map((part, index) => {
-      if (part.startsWith("```") && part.endsWith("```")) {
-        const lines = part.slice(3, -3).trim().split("\n");
-        const firstLine = lines[0].trim();
-        const hasLang = /^[a-zA-Z0-9_-]+$/.test(firstLine);
-        const code = hasLang ? lines.slice(1).join("\n") : lines.join("\n");
-
-        return (
-          <div
-            key={index}
-            className="my-space-sm p-space-md rounded-lg bg-surface-container-lowest border border-outline-variant font-mono text-code-block text-on-surface overflow-x-auto shadow-elevation-1"
-          >
-            <code>{code}</code>
-          </div>
-        );
-      }
-
-      // Convert **bold** markdown to strong tags
-      const formattedSubparts = part.split(/(\*\*.*?\*\*)/g).map((sub, sIndex) => {
-        if (sub.startsWith("**") && sub.endsWith("**")) {
-          return (
-            <strong key={sIndex} className={`font-semibold ${isWhiteText ? "text-white" : "text-on-surface"}`}>
-              {sub.slice(2, -2)}
-            </strong>
-          );
-        }
-        return sub;
-      });
-
-      return (
-        <p key={index} className={`${textSizeClass} leading-relaxed whitespace-pre-line mb-space-xs ${isWhiteText ? "text-white" : "text-on-surface-variant"}`}>
-          {formattedSubparts}
-        </p>
-      );
-    });
-  };
-
   return (
     <div className="relative rounded-2xl border border-primary/30 bg-tertiary-container shadow-ai-glow overflow-hidden transition-all animate-fadeIn">
       {/* Top subtle gradient accent bar */}
@@ -191,7 +151,7 @@ export function AIExplanationCard({
 
         {/* Explanation Body */}
         <div className="space-y-space-xs text-on-surface bg-surface-container-lowest/60 p-4 rounded-xl border border-outline-variant/60">
-          {renderFormattedExplanation(explanation)}
+          <MarkdownRenderer content={explanation} />
         </div>
 
         {/* Inline AI Chat Section (Analitica In-Question Chat Bar) */}
@@ -278,7 +238,7 @@ export function AIExplanationCard({
                     {msg.role === "user" ? "Anda" : "AI Tutor"}
                   </div>
                   <div className={msg.role === "user" ? "text-white" : "text-on-surface"}>
-                    {renderFormattedExplanation(msg.content, msg.role === "user", "text-body-xs")}
+                    <MarkdownRenderer content={msg.content} isUser={msg.role === "user"} />
                   </div>
                 </div>
               ))}

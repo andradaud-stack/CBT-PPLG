@@ -7,9 +7,6 @@ import {
   Send,
   Sparkles,
   Trash2,
-  Copy,
-  Check,
-  Terminal,
   ArrowRight,
   ShieldCheck,
   Plus,
@@ -24,6 +21,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { getAuthSession } from "@/lib/auth";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import {
   getUserProfile,
   syncAiSessionsFromServer,
@@ -128,7 +126,6 @@ function AITutorContent() {
 
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
   const [userName, setUserName] = useState("Siswa");
   const [userId, setUserId] = useState<string>("");
   const [userEmail, setUserEmail] = useState<string>("");
@@ -493,13 +490,7 @@ function AITutorContent() {
     }
   };
 
-  const handleCopyCode = (code: string, id: string) => {
-    navigator.clipboard.writeText(code);
-    setCopiedCodeId(id);
-    setTimeout(() => {
-      setCopiedCodeId(null);
-    }, 2000);
-  };
+  
 
   // Group sessions by date like ChatGPT
   const groupedSessions = useMemo(() => {
@@ -546,174 +537,6 @@ function AITutorContent() {
   }, [sessions, historySearch]);
 
   // Markdown rendering helpers
-  const renderInlineFormatted = (text: string, isUser = false) => {
-    const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*)/g);
-
-    return parts.map((part, index) => {
-      if (part.startsWith("`") && part.endsWith("`") && part.length > 2) {
-        return (
-          <code
-            key={index}
-            className={`px-1.5 py-0.5 rounded font-mono text-[12px] font-semibold ${
-              isUser
-                ? "bg-white/20 text-white"
-                : "bg-surface-container text-primary border border-outline-variant/60"
-            }`}
-          >
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-      if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-        return (
-          <strong key={index} className={`font-bold ${isUser ? "text-white" : "text-on-surface"}`}>
-            {part.slice(2, -2)}
-          </strong>
-        );
-      }
-      if (part.startsWith("*") && part.endsWith("*") && part.length > 2) {
-        return (
-          <em key={index} className="italic">
-            {part.slice(1, -1)}
-          </em>
-        );
-      }
-      return part;
-    });
-  };
-
-  const renderMessageContent = (text: string, isUser = false) => {
-    const parts = text.split(/(```[\s\S]*?```)/g);
-
-    return parts.map((part, pIdx) => {
-      if (part.startsWith("```") && part.endsWith("```")) {
-        const lines = part.slice(3, -3).trim().split("\n");
-        let lang = "";
-        let codeLines = lines;
-        if (lines.length > 0 && /^[a-zA-Z0-9_-]+$/.test(lines[0].trim())) {
-          lang = lines[0].trim();
-          codeLines = lines.slice(1);
-        }
-        const code = codeLines.join("\n");
-        const codeId = `code-${pIdx}-${code.slice(0, 10)}`;
-
-        return (
-          <div
-            key={pIdx}
-            className="my-3 rounded-2xl border border-slate-700/80 bg-[#0f172a] shadow-elevation-2 overflow-hidden text-left"
-          >
-            <div className="px-4 py-2 bg-slate-800/90 border-b border-slate-700/70 flex items-center justify-between text-[11px] font-mono text-slate-300">
-              <span className="flex items-center gap-1.5 text-primary font-semibold uppercase tracking-wider">
-                <Terminal className="w-3.5 h-3.5" />
-                {lang || "Code"}
-              </span>
-              <button
-                type="button"
-                onClick={() => handleCopyCode(code, codeId)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition-colors"
-                title="Salin kode"
-              >
-                {copiedCodeId === codeId ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span className="text-emerald-400 font-bold">Tersalin!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Salin</span>
-                  </>
-                )}
-              </button>
-            </div>
-            <div className="p-4 text-[13px] font-mono text-slate-100 overflow-x-auto leading-relaxed">
-              <pre>
-                <code>{code}</code>
-              </pre>
-            </div>
-          </div>
-        );
-      }
-
-      const rawLines = part.split("\n");
-
-      return (
-        <div
-          key={pIdx}
-          className={`space-y-1.5 leading-relaxed text-body-sm text-left ${
-            isUser ? "text-white" : "text-on-surface"
-          }`}
-        >
-          {rawLines.map((line, lIdx) => {
-            const trimmed = line.trim();
-
-            if (!trimmed) {
-              return <div key={lIdx} className="h-1.5" />;
-            }
-
-            if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
-              return <div key={lIdx} className="my-3 border-t border-outline-variant/60" />;
-            }
-
-            if (trimmed.startsWith("### ")) {
-              return (
-                <h4 key={lIdx} className="font-bold text-title-sm text-primary mt-3 mb-1 flex items-center gap-1.5">
-                  <span className="w-1.5 h-3.5 bg-primary rounded-full inline-block shrink-0" />
-                  {renderInlineFormatted(trimmed.slice(4))}
-                </h4>
-              );
-            }
-            if (trimmed.startsWith("## ")) {
-              return (
-                <h3 key={lIdx} className="font-bold text-title-md text-on-surface border-b border-outline-variant/60 pb-1 mt-3 mb-1.5">
-                  {renderInlineFormatted(trimmed.slice(3))}
-                </h3>
-              );
-            }
-
-            if (trimmed.startsWith("> ")) {
-              return (
-                <blockquote
-                  key={lIdx}
-                  className="pl-3.5 border-l-2 border-primary/60 text-on-surface-variant italic my-1.5 text-body-xs bg-surface-container-low/40 py-1 rounded-r-lg"
-                >
-                  {renderInlineFormatted(trimmed.slice(2))}
-                </blockquote>
-              );
-            }
-
-            if (/^[-*+]\s+/.test(trimmed)) {
-              return (
-                <div key={lIdx} className="flex items-start gap-2 pl-2">
-                  <span className="text-primary mt-1 font-bold leading-none">&bull;</span>
-                  <span className="flex-1">{renderInlineFormatted(trimmed.replace(/^[-*+]\s+/, ""))}</span>
-                </div>
-              );
-            }
-
-            const numMatch = trimmed.match(/^(\d+)\.\s+(.*)$/);
-            if (numMatch) {
-              return (
-                <div key={lIdx} className="flex items-start gap-2 pl-2">
-                  <span className="font-mono text-primary font-bold text-[12px] min-w-[20px] text-right">
-                    {numMatch[1]}.
-                  </span>
-                  <span className="flex-1">{renderInlineFormatted(numMatch[2])}</span>
-                </div>
-              );
-            }
-
-            return (
-              <p key={lIdx} className={`leading-relaxed ${isUser ? "text-white font-medium" : ""}`}>
-                {renderInlineFormatted(line, isUser)}
-              </p>
-            );
-          })}
-        </div>
-      );
-    });
-  };
-
   // Render History Item Row
   const renderSessionItem = (session: ChatSession) => {
     const isActive = session.id === activeSessionId;
@@ -1105,7 +928,7 @@ function AITutorContent() {
                         </div>
                       )}
 
-                      {renderMessageContent(msg.content, isUser)}
+                      <MarkdownRenderer content={msg.content} isUser={isUser} />
 
                       {isUser && msg.timestamp && (
                         <div className="text-right text-[10px] text-on-primary/70 font-mono mt-1">

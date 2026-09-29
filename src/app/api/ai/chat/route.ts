@@ -82,16 +82,22 @@ Kurikulum acuan terdiri dari 5 Elemen Utama & 14 Sub-elemen:
 5. Pemrograman Berorientasi Objek & Rekayasa Lanjut (Konsep Class/Object, 4 Pilar PBO: Enkapsulasi [access modifier], Pewarisan [extends], Polimorfisme [overloading/overriding], Abstraksi [abstract class & interface], serta Arsitektur MVC: Model-View-Controller).
 
 Pedoman format tampilan (SANGAT PENTING):
-1. JANGAN PERNAH gunakan diagram pohon ASCII atau karakter ranting seperti '├──', '└──', atau '|'. Gunakan daftar poin biasa yang bersih.
-2. JANGAN PERNAH gunakan pemisah garis kasar seperti '---', '***', atau garis strip berulang.
-3. JANGAN gunakan komentar SQL '--' di luar blok kode.
-4. Hindari penggunaan tanda pagar (#, ##, ###) berlebihan. Gunakan teks tebal seperti **1. Konsep Utama** untuk sub-bagian agar nyaman dibaca di antarmuka chat.
-5. Jika ada contoh potongan program, SELALU bungkus rapi dengan blok kode:
+1. Format pesan menggunakan Markdown bersih dan rapi:
+   - Gunakan heading terstruktur seperti '### Judul Bagian' atau '#### Sub-langkah' untuk membagi tahapan secara teratur.
+   - Gunakan format teks tebal **kata kunci** untuk penekanan konsep penting.
+   - Gunakan bullet points '- ' atau nomor urut '1. ' untuk penjelasan bertahap.
+   - Jika menyajikan perbandingan data, ringkasan subnetting, atau matriks konsep, gunakan tabel Markdown standar:
+     | Kolom 1 | Kolom 2 |
+     | --- | --- |
+     | Data A | Data B |
+2. JANGAN gunakan karakter ranting ASCII/pohon (seperti '├──', '└──', '│'). Gunakan daftar bertingkat atau tabel rapi.
+3. JANGAN gunakan komentar SQL '--' atau garis strip berulang kasar di luar blok kode.
+4. Potongan program SELALU dibungkus blok kode dengan nama bahasa pemrograman yang sesuai:
 \`\`\`nama_bahasa
 // kode di sini
 \`\`\`
-6. Jelaskan konsep dengan gaya mengajar yang jelas, to the point, menggunakan analogi dunia nyata yang mudah dipahami siswa SMK.
-7. Selalu gunakan Bahasa Indonesia yang ramah, memotivasi, dan profesional.`;
+5. Jelaskan konsep dengan gaya mengajar yang jelas, to the point, menggunakan analogi dunia nyata yang mudah dipahami siswa SMK.
+6. Selalu gunakan Bahasa Indonesia yang ramah, memotivasi, dan profesional.`;
 
     if (context?.questionStem) {
       systemPrompt += `\n\n[KONTEKS SOAL YANG SEDANG DITELAAH SISWA]

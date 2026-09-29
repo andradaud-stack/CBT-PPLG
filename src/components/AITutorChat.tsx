@@ -2,7 +2,8 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Sparkles, X, Send, Bot, User, Loader2, Terminal } from "lucide-react";
+import { Sparkles, X, Send, Bot, User, Loader2 } from "lucide-react";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface ChatMessage {
   id: string;
@@ -153,198 +154,6 @@ export function AITutorChat({ currentContext }: AITutorChatProps) {
   ];
 
   // Helper render inline markdown: bold, italic, and inline code
-  const renderInlineFormatted = (text: string, isUser = false) => {
-    // 1. Process inline code `...`
-    const codeParts = text.split(/(`[^`]+`)/g);
-
-    return codeParts.map((cPart, cIdx) => {
-      if (cPart.startsWith("`") && cPart.endsWith("`")) {
-        return (
-          <code
-            key={cIdx}
-            className={`px-1.5 py-0.5 mx-0.5 rounded-md font-mono text-[11px] font-semibold ${
-              isUser
-                ? "bg-white/20 text-white border border-white/30"
-                : "bg-surface-container-high border border-outline-variant/70 text-primary"
-            }`}
-          >
-            {cPart.slice(1, -1)}
-          </code>
-        );
-      }
-
-      // 2. Process **bold**
-      const boldParts = cPart.split(/(\*\*.*?\*\*)/g);
-      return boldParts.map((bPart, bIdx) => {
-        if (bPart.startsWith("**") && bPart.endsWith("**")) {
-          return (
-            <strong key={bIdx} className={`font-bold ${isUser ? "text-white" : "text-on-surface"}`}>
-              {bPart.slice(2, -2)}
-            </strong>
-          );
-        }
-
-        // 3. Process *italic*
-        const italicParts = bPart.split(/(\*[^*]+\*)/g);
-        return italicParts.map((iPart, iIdx) => {
-          if (iPart.startsWith("*") && iPart.endsWith("*")) {
-            return (
-              <em key={iIdx} className={`italic ${isUser ? "text-white/90" : "text-on-surface-variant"}`}>
-                {iPart.slice(1, -1)}
-              </em>
-            );
-          }
-          return iPart;
-        });
-      });
-    });
-  };
-
-  // Helper render formatted markdown text & code blocks
-  const renderMessageContent = (text: string, isUser = false) => {
-    const parts = text.split(/(```[\s\S]*?```)/g);
-
-    return parts.map((part, pIdx) => {
-      if (part.startsWith("```") && part.endsWith("```")) {
-        const lines = part.slice(3, -3).trim().split("\n");
-        let lang = "";
-        let codeLines = lines;
-        if (lines.length > 0 && /^[a-zA-Z0-9_-]+$/.test(lines[0].trim())) {
-          lang = lines[0].trim();
-          codeLines = lines.slice(1);
-        }
-        const code = codeLines.join("\n");
-
-        return (
-          <div
-            key={pIdx}
-            className="my-2.5 rounded-xl border border-slate-700/80 bg-[#0f172a] shadow-elevation-2 overflow-hidden text-left"
-          >
-            <div className="px-3 py-1.5 bg-slate-800/90 border-b border-slate-700/70 flex items-center justify-between text-[11px] font-mono text-slate-300">
-              <span className="flex items-center gap-1.5 text-primary font-semibold uppercase tracking-wider">
-                <Terminal className="w-3.5 h-3.5" />
-                {lang || "Code"}
-              </span>
-            </div>
-            <div className="p-3 text-[12px] font-mono text-slate-100 overflow-x-auto leading-relaxed">
-              <pre>
-                <code>{code}</code>
-              </pre>
-            </div>
-          </div>
-        );
-      }
-
-      // Non-code block: process lines
-      const rawLines = part.split("\n");
-
-      return (
-        <div
-          key={pIdx}
-          className={`space-y-1.5 leading-relaxed text-body-sm text-left ${
-            isUser ? "text-white" : "text-on-surface"
-          }`}
-        >
-          {rawLines.map((line, lIdx) => {
-            const trimmed = line.trim();
-
-            if (!trimmed) {
-              return <div key={lIdx} className="h-1" />;
-            }
-
-            // 1. Horizontal Rules: ---, ***, ___
-            if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
-              return <div key={lIdx} className="my-2.5 border-t border-outline-variant/60" />;
-            }
-
-            // 2. Headings: #, ##, ###, ####
-            if (trimmed.startsWith("#### ")) {
-              return (
-                <h5 key={lIdx} className="font-bold text-title-xs text-on-surface mt-2 mb-1 flex items-center gap-1.5">
-                  {renderInlineFormatted(trimmed.slice(5))}
-                </h5>
-              );
-            }
-            if (trimmed.startsWith("### ")) {
-              return (
-                <h4 key={lIdx} className="font-bold text-title-sm text-primary mt-2 mb-1 flex items-center gap-1.5">
-                  <span className="w-1.5 h-3.5 bg-primary rounded-full inline-block shrink-0" />
-                  {renderInlineFormatted(trimmed.slice(4))}
-                </h4>
-              );
-            }
-            if (trimmed.startsWith("## ")) {
-              return (
-                <h3 key={lIdx} className="font-bold text-title-md text-on-surface border-b border-outline-variant/60 pb-1 mt-2.5 mb-1.5">
-                  {renderInlineFormatted(trimmed.slice(3))}
-                </h3>
-              );
-            }
-            if (trimmed.startsWith("# ")) {
-              return (
-                <h2 key={lIdx} className="font-bold text-headline-sm text-on-surface mt-3 mb-1.5">
-                  {renderInlineFormatted(trimmed.slice(2))}
-                </h2>
-              );
-            }
-
-            // 3. Clean ugly ASCII branch/tree markers (├──, └──, │, |--, ||)
-            if (/^[├└│\|\-\+]+/.test(trimmed)) {
-              const cleanedText = trimmed.replace(/^[├└│\|\-\+\s]+/, "").trim();
-              if (!cleanedText) return null;
-              return (
-                <div key={lIdx} className="flex items-start gap-2 ml-3 my-0.5 text-body-xs font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary/70 shrink-0 mt-1.5" />
-                  <span>{renderInlineFormatted(cleanedText)}</span>
-                </div>
-              );
-            }
-
-            // 4. SQL comment lines (-- ...)
-            if (trimmed.startsWith("-- ")) {
-              return (
-                <div key={lIdx} className="my-1.5 p-2 rounded-lg bg-surface-container border-l-2 border-primary text-body-xs font-mono text-on-surface-variant flex items-center gap-2">
-                  <span className="font-semibold text-primary shrink-0">Contoh:</span>
-                  <span>{renderInlineFormatted(trimmed.slice(3))}</span>
-                </div>
-              );
-            }
-
-            // 5. Bullet Lists (- , * , • )
-            if (/^[-*•]\s+/.test(trimmed)) {
-              return (
-                <div key={lIdx} className="flex items-start gap-2 ml-1 my-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0 mt-2" />
-                  <span className="flex-1">{renderInlineFormatted(trimmed.replace(/^[-*•]\s+/, ""))}</span>
-                </div>
-              );
-            }
-
-            // 6. Numbered Lists (1. , 2. )
-            const numMatch = trimmed.match(/^(\d+)\.\s+(.*)/);
-            if (numMatch) {
-              return (
-                <div key={lIdx} className="flex items-start gap-2 ml-1 my-0.5">
-                  <span className="font-mono text-label-sm font-bold text-primary shrink-0 mt-0.5">
-                    {numMatch[1]}.
-                  </span>
-                  <span className="flex-1">{renderInlineFormatted(numMatch[2])}</span>
-                </div>
-              );
-            }
-
-            // 7. Regular paragraph text
-            return (
-              <p key={lIdx} className={`leading-relaxed ${isUser ? "text-white font-medium" : ""}`}>
-                {renderInlineFormatted(line, isUser)}
-              </p>
-            );
-          })}
-        </div>
-      );
-    });
-  };
-
   // Sembunyikan total tombol mengambang AI Tutor saat ujian berlangsung maupun di halaman pembahasan
   if (isExamActive || pathname?.startsWith("/simulation")) {
     return null;
@@ -432,7 +241,7 @@ export function AITutorChat({ currentContext }: AITutorChatProps) {
                         : "bg-surface-container-lowest text-on-surface border border-outline-variant/80 rounded-tl-none shadow-elevation-1"
                     }`}
                   >
-                    {renderMessageContent(m.content, isUser)}
+                    <MarkdownRenderer content={m.content} isUser={isUser} />
                   </div>
 
                   {isUser && (
