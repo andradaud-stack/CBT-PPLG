@@ -91,6 +91,13 @@ export default function RemedialSpacedRepetitionPage() {
       } else {
         setSelectedAnswers([...selectedAnswers, key]);
       }
+    } else if (currentQ.type === "boolean") {
+      const [statementKey] = key.split(":");
+      const statementKeyLower = statementKey.toLowerCase();
+      const otherAnswers = selectedAnswers.filter(
+        (k) => !k.toLowerCase().startsWith(`${statementKeyLower}:`)
+      );
+      setSelectedAnswers([...otherAnswers, key]);
     } else {
       setSelectedAnswers([key]);
     }
@@ -228,10 +235,20 @@ export default function RemedialSpacedRepetitionPage() {
                 question={currentPracticeQ}
                 userAnswer={selectedAnswers}
                 explanation={currentPracticeQ.explanation}
-                correctAnswerText={currentPracticeQ.options
-                  .filter((o) => currentPracticeQ.correctAnswer.includes(o.key))
-                  .map((o) => `${o.key}. ${o.text}`)
-                  .join("; ")}
+                correctAnswerText={
+                  currentPracticeQ.type === "boolean"
+                    ? currentPracticeQ.correctAnswer
+                        .map((ans) => {
+                          const [key, val] = ans.split(":");
+                          const valLabel = val?.toLowerCase() === "benar" ? "Benar" : "Salah";
+                          return `Pernyataan ${key}: ${valLabel}`;
+                        })
+                        .join(" | ")
+                    : currentPracticeQ.options
+                        .filter((o) => currentPracticeQ.correctAnswer.includes(o.key))
+                        .map((o) => `${o.key}. ${o.text}`)
+                        .join("; ")
+                }
                 isCorrect={isAnswerCorrect ?? false}
               />
             )}

@@ -298,7 +298,7 @@ export default function SimulationPage() {
     }
   };
 
-  // Toggle pilihan jawaban (Single vs Multiple)
+  // Toggle pilihan jawaban (Single vs Multiple vs Boolean Kategori)
   const handleSelectOption = (key: string) => {
     const currentQ = questions[currentIndex];
     if (!currentQ) return;
@@ -318,16 +318,31 @@ export default function SimulationPage() {
         } else {
           newSelected = [...existing.selectedAnswers, key];
         }
+      } else if (currentQ.type === "boolean") {
+        // key berformat "${statementKey}:${choice}" (misal "A:benar" atau "A:salah")
+        const [statementKey] = key.split(":");
+        const statementKeyLower = statementKey.toLowerCase();
+        // Hapus pilihan sebelumnya untuk pernyataan ini saja, pertahankan pernyataan lain
+        const otherAnswers = existing.selectedAnswers.filter(
+          (k) => !k.toLowerCase().startsWith(`${statementKeyLower}:`)
+        );
+        newSelected = [...otherAnswers, key];
       } else {
         newSelected = [key];
       }
+
+      // Untuk soal kategori boolean, butir dianggap terjawab jika SEMUA pernyataan telah dipilih
+      const isAnswered =
+        currentQ.type === "boolean"
+          ? newSelected.length === currentQ.options.length
+          : newSelected.length > 0;
 
       return {
         ...prev,
         [currentQ.id]: {
           ...existing,
           selectedAnswers: newSelected,
-          isAnswered: newSelected.length > 0,
+          isAnswered,
         },
       };
     });

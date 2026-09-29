@@ -105,21 +105,27 @@
     "topic": "Pemrograman Dasar",
     "difficulty": "mudah",
     "type": "boolean",
-    "stem": "Dalam bahasa pemrograman tingkat tinggi (seperti Python, C++, Java), variabel bertipe data primitif 'Boolean' mengalokasikan nilai logika benar (True / 1) atau salah (False / 0), dan operasi logika `(true AND false) OR (NOT false)` akan menghasilkan nilai akhir `true`.\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    "stem": "Diberikan ekspresi logika pemrograman berikut dalam bahasa tingkat tinggi:\n```python\nx = (True and False) or (not False)\ny = not (10 > 5 or 3 < 1)\n```\nTentukan apakah setiap pernyataan evaluasi nilai variabel logika di atas **Benar** atau **Salah**!",
     "options": [
       {
         "key": "A",
-        "text": "Benar"
+        "text": "Variabel `x` akan bernilai `True` karena `(True and False)` bernilai `False`, `not False` bernilai `True`, dan `False or True` menghasilkan `True`."
       },
       {
         "key": "B",
-        "text": "Salah"
+        "text": "Variabel `y` akan bernilai `True` karena negasi dari ekspresi di dalam kurung bernilai benar."
+      },
+      {
+        "key": "C",
+        "text": "Tipe data primitif boolean hanya memiliki dua kemungkinan nilai literal, yaitu benar (true) atau salah (false)."
       }
     ],
     "correctAnswer": [
-      "A"
+      "A:benar",
+      "B:salah",
+      "C:benar"
     ],
-    "explanation": "Pernyataan tersebut **BENAR**.\nEvaluasi ekspresi logika:\n1. `true AND false` = `false`\n2. `NOT false` = `true`\n3. `false OR true` = `true`."
+    "explanation": "Analisis ekspresi logika:\n- **Pernyataan A (Benar):** Evaluasi `x`: `(True and False)` = `False`. `not False` = `True`. `False or True` = `True`.\n- **Pernyataan B (Salah):** Evaluasi `y`: `10 > 5` bernilai `True`, sehingga `(True or False)` bernilai `True`. Maka `not True` menghasilkan `False`.\n- **Pernyataan C (Benar):** Tipe boolean aljabar hanya memiliki 2 nilai kebenaran: true dan false."
   },
   {
     "id": "pw-01",
@@ -227,21 +233,27 @@
     "topic": "Pemrograman Web",
     "difficulty": "mudah",
     "type": "boolean",
-    "stem": "Virtual DOM yang diterapkan pada framework JavaScript modern (seperti React atau Vue) selalu memperbarui seluruh node DOM browser riil secara langsung setiap kali terjadi perubahan state sekecil apa pun, tanpa melalui proses kalkulasi perbandingan (diffing algorithm).\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    "stem": "Dalam pengembangan antarmuka web modern berskala besar, pustaka seperti React memanfaatkan konsep Virtual DOM untuk mengoptimalkan efisiensi rendering antarmuka pengguna (UI).\n\nTentukan apakah setiap pernyataan mengenai Virtual DOM dan manipulasi dokumen HTML berikut **Benar** atau **Salah**!",
     "options": [
       {
         "key": "A",
-        "text": "Benar"
+        "text": "Virtual DOM adalah representasi ringan dari DOM asli browser yang disimpan dalam memori JavaScript."
       },
       {
         "key": "B",
-        "text": "Salah"
+        "text": "Setiap terjadi pembaruan state komponen sekecil apa pun, React akan selalu merender ulang dan menghancurkan seluruh pohon DOM riil browser secara menyeluruh."
+      },
+      {
+        "key": "C",
+        "text": "Proses diffing algorithm (rekonsiliasi) membandingkan Virtual DOM lama dengan Virtual DOM baru untuk hanya memperbarui node DOM riil yang benar-benar berubah."
       }
     ],
     "correctAnswer": [
-      "B"
+      "A:benar",
+      "B:salah",
+      "C:benar"
     ],
-    "explanation": "Pernyataan tersebut **SALAH**.\nVirtual DOM justru diciptakan untuk menghindari manipulasi DOM riil secara menyeluruh yang lambat. Virtual DOM membuat representasi pohon di memori, menjalankan **diffing algorithm** (rekonsiliasi) untuk mendeteksi perubahan spesifik, dan hanya memperbarui (*batch update*) node DOM riil yang benar-benar berubah."
+    "explanation": "Analisis setiap pernyataan:\n- **Pernyataan A (Benar):** Virtual DOM adalah struktur data pohon virtual di memori yang merepresentasikan antarmuka.\n- **Pernyataan B (Salah):** Menghancurkan seluruh DOM riil browser sangat lambat dan membebani performa browser; Virtual DOM dibuat justru untuk mencegah hal tersebut.\n- **Pernyataan C (Benar):** Melalui *diffing algorithm*, React mengidentifikasi perbedaan spesifik dan melakukan pembaruan efisien (*batch updates*) ke real DOM."
   },
   {
     "id": "bd-01",
@@ -350,21 +362,27 @@
     "topic": "Basis Data",
     "difficulty": "sulit",
     "type": "boolean",
-    "stem": "Prinsip ACID pada transaksi basis data menjamin bahwa properti 'Atomicity' memastikan serangkaian operasi query (misalnya debit saldo dan kredit saldo) dieksekusi tuntas seluruhnya (commit) atau jika salah satu operasi gagal maka seluruh perubahan dibatalkan tanpa sisa (rollback).\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    "stem": "Sebuah aplikasi perbankan digital memproses transfer uang antar nasabah melalui transaksi basis data relasional (RDBMS) yang wajib mematuhi standar ACID (Atomicity, Consistency, Isolation, Durability).\n\nTentukan apakah setiap pernyataan mengenai prinsip transaksi database ACID berikut **Benar** atau **Salah**!",
     "options": [
       {
         "key": "A",
-        "text": "Benar"
+        "text": "Prinsip Atomicity menjamin seluruh rentetan perintah query dalam satu transaksi berhasil dieksekusi tuntas (commit), atau dibatalkan seutuhnya (rollback) jika ada salah satu operasi yang gagal."
       },
       {
         "key": "B",
-        "text": "Salah"
+        "text": "Prinsip Durability memastikan bahwa setelah transaksi berstatus committed, perubahan data tersimpan permanen dan tidak akan hilang meskipun server mendadak mati listrik."
+      },
+      {
+        "key": "C",
+        "text": "Perintah SQL `ROLLBACK` digunakan untuk menyimpan permanen seluruh perubahan data tabel ke dalam disk fisik server."
       }
     ],
     "correctAnswer": [
-      "A"
+      "A:benar",
+      "B:benar",
+      "C:salah"
     ],
-    "explanation": "Pernyataan tersebut **BENAR**.\n**Atomicity** mengusung konsep 'all-or-nothing'. Jika salah satu instruksi dalam unit transaksi database mengalami kegagalan (misalnya koneksi putus atau constraint violated), sistem database RDBMS wajib melakukan operasi `ROLLBACK` ke keadaan sebelum transaksi dimulai."
+    "explanation": "Analisis setiap pernyataan:\n- **Pernyataan A (Benar):** *Atomicity* menganut filosofi 'all-or-nothing'. Kegagalan satu langkah (misal saldo terpotong tapi tujuan gagal) akan membatalkan seluruh transaksi.\n- **Pernyataan B (Benar):** *Durability* menjamin data transaksi yang ter-commit tersimpan permanen di penyimpanan non-volatile (transaction log & disk).\n- **Pernyataan C (Salah):** Perintah untuk menyimpan permanen adalah `COMMIT`. Perintah `ROLLBACK` justru digunakan untuk membatalkan perubahan dan mengembalikan database ke kondisi awal."
   },
   {
     "id": "pbo-01",
@@ -472,21 +490,27 @@
     "topic": "Pemrograman Berorientasi Objek",
     "difficulty": "mudah",
     "type": "boolean",
-    "stem": "Pada arsitektur Model-View-Controller (MVC), komponen 'View' bertanggung jawab langsung mengeksekusi kueri SQL ke basis data dan memproses logika bisnis aplikasi secara mandiri tanpa campur tangan Model maupun Controller.\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    "stem": "Dalam perancangan perangkat lunak berbasis OOP, pola arsitektur Model-View-Controller (MVC) umum digunakan untuk memisahkan tanggung jawab (separation of concerns) komponen sistem.\n\nTentukan apakah setiap pernyataan mengenai pembagian peran arsitektur MVC berikut **Benar** atau **Salah**!",
     "options": [
       {
         "key": "A",
-        "text": "Benar"
+        "text": "Komponen Model bertanggung jawab mengelola struktur data, logika bisnis, dan interaksi langsung dengan basis data."
       },
       {
         "key": "B",
-        "text": "Salah"
+        "text": "Komponen View bertanggung jawab langsung mengeksekusi kueri transaksi SQL mentah ke database dan memproses kalkulasi bisnis rumit."
+      },
+      {
+        "key": "C",
+        "text": "Komponen Controller bertindak sebagai perantara yang menerima request/input dari pengguna, memanggil Model, lalu menentukan View mana yang akan ditampilkan."
       }
     ],
     "correctAnswer": [
-      "B"
+      "A:benar",
+      "B:salah",
+      "C:benar"
     ],
-    "explanation": "Pernyataan tersebut **SALAH**.\nDalam pola MVC, komponen **View** bertugas murni mempresentasikan tampilan data antarmuka pengguna (UI/HTML). Pengelolaan data dan kueri basis data adalah tanggung jawab **Model**, sedangkan alur logika orkestrasi input pengguna dikendalikan oleh **Controller**."
+    "explanation": "Analisis setiap pernyataan:\n- **Pernyataan A (Benar):** *Model* memusatkan representasi data entitas dan aturan validasi data bisnis.\n- **Pernyataan B (Salah):** *View* murni bertugas mempresentasikan antarmuka visual kepada user. Mengakses query SQL langsung di dalam View melanggar prinsip *separation of concerns*.\n- **Pernyataan C (Benar):** *Controller* adalah orkestrator yang menjembatani alur antara View dan Model."
   },
   {
     "id": "mob-01",
@@ -796,21 +820,27 @@
     "topic": "Keamanan Siber Dasar",
     "difficulty": "mudah",
     "type": "boolean",
-    "stem": "Otentikasi Multi-Faktor (Multi-Factor Authentication / MFA) meningkatkan keamanan akun secara signifikan karena menggabungkan minimal dua faktor independen: sesuatu yang Anda ketahui (password), sesuatu yang Anda miliki (smartphone OTP), atau sesuatu yang melekat pada Anda (biometrik sidik jari).\n\nTentukan apakah pernyataan di atas Benar atau Salah!",
+    "stem": "Sebuah platform fintech menerapkan Otentikasi Multi-Faktor (Multi-Factor Authentication / MFA) untuk mencegah pengambilalihan akun nasabah dari serangan phishing dan kebocoran kata sandi (credential stuffing).\n\nTentukan apakah setiap pernyataan mengenai konsep otentikasi keamanan siber berikut **Benar** atau **Salah**!",
     "options": [
       {
         "key": "A",
-        "text": "Benar"
+        "text": "MFA bekerja dengan menggabungkan minimal dua faktor verifikasi independen dari kategori: apa yang Anda ketahui (knowledge), apa yang Anda miliki (possession), atau apa yang melekat pada Anda (inherence)."
       },
       {
         "key": "B",
-        "text": "Salah"
+        "text": "Menggunakan dua buah password teks yang berbeda secara berturut-turut pada form login yang sama sudah memenuhi syarat Multi-Factor Authentication (MFA)."
+      },
+      {
+        "key": "C",
+        "text": "Faktor verifikasi biometrik seperti sensor sidik jari (fingerprint) dan pengenalan wajah (face recognition) diklasifikasikan ke dalam faktor inherence."
       }
     ],
     "correctAnswer": [
-      "A"
+      "A:benar",
+      "B:salah",
+      "C:benar"
     ],
-    "explanation": "Pernyataan tersebut **BENAR**.\nMFA menerapkan pertahanan berlapis berdasarkan 3 kategori faktor otentikasi utama: *Knowledge* (apa yang diketahui: password/PIN), *Possession* (apa yang dimiliki: hardware token/smartphone authenticator), dan *Inherence* (apa yang melekat pada diri: biometrik seperti sidik jari atau pengenalan wajah)."
+    "explanation": "Analisis setiap pernyataan:\n- **Pernyataan A (Benar):** MFA wajib memadukan faktor berbeda (*something you know*, *something you have*, *something you are*).\n- **Pernyataan B (Salah):** Dua password tetap berada dalam kategori faktor yang sama (*something you know*), sehingga bukan MFA melainkan sekadar *two passwords*.\n- **Pernyataan C (Benar):** Ciri biologis fisik individu masuk dalam kategori *inherence factor*."
   },
   {
     "id": "sim-extra-01",

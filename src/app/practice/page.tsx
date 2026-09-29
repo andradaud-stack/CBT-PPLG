@@ -301,6 +301,13 @@ export default function PracticePage() {
       } else {
         setSelectedAnswers([...selectedAnswers, key]);
       }
+    } else if (currentQ.type === "boolean") {
+      const [statementKey] = key.split(":");
+      const statementKeyLower = statementKey.toLowerCase();
+      const otherAnswers = selectedAnswers.filter(
+        (k) => !k.toLowerCase().startsWith(`${statementKeyLower}:`)
+      );
+      setSelectedAnswers([...otherAnswers, key]);
     } else {
       setSelectedAnswers([key]);
     }
@@ -997,10 +1004,20 @@ export default function PracticePage() {
                         question={currentQ}
                         userAnswer={selectedAnswers}
                         explanation={currentQ.explanation}
-                        correctAnswerText={currentQ.options
-                          .filter((o) => currentQ.correctAnswer.includes(o.key))
-                          .map((o) => `${o.key}. ${o.text}`)
-                          .join("; ")}
+                        correctAnswerText={
+                          currentQ.type === "boolean"
+                            ? currentQ.correctAnswer
+                                .map((ans) => {
+                                  const [key, val] = ans.split(":");
+                                  const valLabel = val?.toLowerCase() === "benar" ? "Benar" : "Salah";
+                                  return `Pernyataan ${key}: ${valLabel}`;
+                                })
+                                .join(" | ")
+                            : currentQ.options
+                                .filter((o) => currentQ.correctAnswer.includes(o.key))
+                                .map((o) => `${o.key}. ${o.text}`)
+                                .join("; ")
+                        }
                         isCorrect={isAnswerCorrect ?? false}
                         onNext={
                           currentQIndex < subQuestions.length - 1

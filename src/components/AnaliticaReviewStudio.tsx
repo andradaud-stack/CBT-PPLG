@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { isQuestionBookmarked, toggleBookmark } from "@/lib/storage";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
+import { evaluateAnswer } from "@/lib/irt";
 
 interface AnaliticaReviewStudioProps {
   questions: Question[];
@@ -65,10 +66,8 @@ export function AnaliticaReviewStudio({
   const userSelected = currentAns?.selectedAnswers ?? [];
   const correctKeys = currentQ?.correctAnswer ?? [];
 
-  // Hitung status benar / salah
-  const isQuestionCorrect =
-    userSelected.length === correctKeys.length &&
-    userSelected.every((key) => correctKeys.includes(key));
+  // Hitung status benar / salah dengan model psikometrik IRT
+  const isQuestionCorrect = currentAns ? evaluateAnswer(currentQ, currentAns) : false;
 
   useEffect(() => {
     if (currentQ) {
@@ -345,71 +344,168 @@ export function AnaliticaReviewStudio({
               {renderFormattedText(currentQ.stem)}
             </div>
 
-            {/* Options List (Analitica Style Highlight) */}
-            <div className="space-y-2.5 pt-2">
-              {currentQ.options.map((option) => {
-                const isChosen = userSelected.includes(option.key);
-                const isCorrect = correctKeys.includes(option.key);
+            {/* Options List / Matrix Category Review */}
+            {currentQ.type === "boolean" ? (
+              <div className="space-y-3 pt-2">
+                <div className="p-3 bg-purple-500/5 dark:bg-purple-950/20 rounded-xl border border-purple-500/20 flex items-center justify-between text-body-xs text-on-surface-variant font-medium">
+                  <span className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
+                    Pilihan Ganda Kategori: Analisis status kebenaran tiap pernyataan berikut.
+                  </span>
+                </div>
 
-                // Option styling rules ala Analitica
-                let cardStyle = "bg-surface-container-lowest border-outline-variant text-on-surface hover:border-primary/40";
-                let badge = null;
+                <div className="overflow-x-auto rounded-xl border border-outline-variant bg-surface-container-lowest shadow-elevation-1">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-surface-container/70 border-b border-outline-variant text-body-xs sm:text-body-sm font-semibold text-on-surface">
+                        <th className="py-3 px-3 sm:px-4 font-mono">Pernyataan</th>
+                        <th className="py-3 px-2 sm:px-3 text-center w-28 font-mono">Jawaban Anda</th>
+                        <th className="py-3 px-2 sm:px-3 text-center w-28 font-mono text-emerald-700 dark:text-emerald-400">Kunci</th>
+                        <th className="py-3 px-2 sm:px-3 text-center w-24 font-mono">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/60">
+                      {currentQ.options.map((opt) => {
+                        const optKeyLower = opt.key.toLowerCase();
+                        const userItem = userSelected.find((a) =>
+                          a.toLowerCase().startsWith(`${optKeyLower}:`)
+                        );
+                        const userVal = userItem ? userItem.split(":")[1]?.toLowerCase() : null;
 
-                if (isChosen && isCorrect) {
-                  // User chose correct
-                  cardStyle = "bg-emerald-500/10 border-2 border-emerald-500 text-emerald-950 dark:text-emerald-100 shadow-elevation-1";
-                  badge = (
-                    <span className="flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
-                      <Check className="w-3 h-3" /> Pilihan Anda (Benar)
-                    </span>
-                  );
-                } else if (isChosen && !isCorrect) {
-                  // User chose wrong
-                  cardStyle = "bg-red-500/10 border-2 border-red-500 text-red-950 dark:text-red-100 shadow-elevation-1";
-                  badge = (
-                    <span className="flex items-center gap-1 font-mono text-[11px] font-bold text-red-700 dark:text-red-400 bg-red-500/20 px-2 py-0.5 rounded">
-                      <X className="w-3 h-3" /> Pilihan Anda (Salah)
-                    </span>
-                  );
-                } else if (!isChosen && isCorrect) {
-                  // Correct answer that was not chosen
-                  cardStyle = "bg-emerald-500/5 border-2 border-dashed border-emerald-500 text-on-surface";
-                  badge = (
-                    <span className="flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded">
-                      <Check className="w-3 h-3" /> Kunci Jawaban
-                    </span>
-                  );
-                }
+                        const correctItem = correctKeys.find((a) =>
+                          a.toLowerCase().startsWith(`${optKeyLower}:`)
+                        );
+                        const correctVal = correctItem
+                          ? correctItem.split(":")[1]?.toLowerCase()
+                          : null;
 
-                return (
-                  <div
-                    key={option.key}
-                    className={`p-3.5 rounded-xl border transition-all flex items-start gap-3 ${cardStyle}`}
-                  >
-                    <span
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-label-md font-bold shrink-0 mt-0.5 ${
-                        isChosen && isCorrect
-                          ? "bg-emerald-600 text-white"
-                          : isChosen && !isCorrect
-                          ? "bg-red-600 text-white"
-                          : isCorrect
-                          ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500"
-                          : "bg-surface-container text-on-surface-variant"
-                      }`}
+                        const isMatch = userVal && correctVal && userVal === correctVal;
+
+                        return (
+                          <tr
+                            key={opt.key}
+                            className="hover:bg-surface-container-low/30 transition-colors"
+                          >
+                            <td className="py-3 px-3 sm:px-4 text-body-sm sm:text-body-md text-on-surface leading-relaxed">
+                              <div className="flex items-start gap-2.5">
+                                <span className="w-6 h-6 rounded-md bg-surface-container text-on-surface-variant flex items-center justify-center font-mono text-label-xs sm:text-label-sm font-bold shrink-0 mt-0.5 border border-outline-variant">
+                                  {opt.key}
+                                </span>
+                                <span className="flex-1">{opt.text}</span>
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-2 sm:px-3 text-center align-middle">
+                              {userVal ? (
+                                <span
+                                  className={`inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2 py-0.5 rounded border ${
+                                    isMatch
+                                      ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-700 dark:text-emerald-300"
+                                      : "bg-red-500/15 border-red-500/40 text-red-700 dark:text-red-300"
+                                  }`}
+                                >
+                                  {userVal === "benar" ? "✓ Benar" : "✗ Salah"}
+                                </span>
+                              ) : (
+                                <span className="text-[11px] font-mono text-on-surface-variant/60 italic">
+                                  Kosong
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-2 sm:px-3 text-center align-middle">
+                              <span className="inline-flex items-center gap-1 font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400">
+                                {correctVal === "benar" ? "✓ Benar" : "✗ Salah"}
+                              </span>
+                            </td>
+
+                            <td className="py-3 px-2 sm:px-3 text-center align-middle">
+                              {isMatch ? (
+                                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-600 text-white shadow-xs">
+                                  <Check className="w-3 h-3" /> Tepat
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-600 text-white shadow-xs">
+                                  <X className="w-3 h-3" /> Keliru
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5 pt-2">
+                {currentQ.options.map((option) => {
+                  const isChosen = userSelected.includes(option.key);
+                  const isCorrect = correctKeys.includes(option.key);
+
+                  // Option styling rules ala Analitica
+                  let cardStyle =
+                    "bg-surface-container-lowest border-outline-variant text-on-surface hover:border-primary/40";
+                  let badge = null;
+
+                  if (isChosen && isCorrect) {
+                    cardStyle =
+                      "bg-emerald-500/10 border-2 border-emerald-500 text-emerald-950 dark:text-emerald-100 shadow-elevation-1";
+                    badge = (
+                      <span className="flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
+                        <Check className="w-3 h-3" /> Pilihan Anda (Benar)
+                      </span>
+                    );
+                  } else if (isChosen && !isCorrect) {
+                    cardStyle =
+                      "bg-red-500/10 border-2 border-red-500 text-red-950 dark:text-red-100 shadow-elevation-1";
+                    badge = (
+                      <span className="flex items-center gap-1 font-mono text-[11px] font-bold text-red-700 dark:text-red-400 bg-red-500/20 px-2 py-0.5 rounded">
+                        <X className="w-3 h-3" /> Pilihan Anda (Salah)
+                      </span>
+                    );
+                  } else if (!isChosen && isCorrect) {
+                    cardStyle =
+                      "bg-emerald-500/5 border-2 border-dashed border-emerald-500 text-on-surface";
+                    badge = (
+                      <span className="flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded">
+                        <Check className="w-3 h-3" /> Kunci Jawaban
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={option.key}
+                      className={`p-3.5 rounded-xl border transition-all flex items-start gap-3 ${cardStyle}`}
                     >
-                      {option.key}
-                    </span>
+                      <span
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center font-mono text-label-md font-bold shrink-0 mt-0.5 ${
+                          isChosen && isCorrect
+                            ? "bg-emerald-600 text-white"
+                            : isChosen && !isCorrect
+                            ? "bg-red-600 text-white"
+                            : isCorrect
+                            ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-500"
+                            : "bg-surface-container text-on-surface-variant"
+                        }`}
+                      >
+                        {option.key}
+                      </span>
 
-                    <div className="flex-1 space-y-1">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <span className="text-body-md font-medium leading-relaxed">{option.text}</span>
-                        {badge}
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-body-md font-medium leading-relaxed">
+                            {option.text}
+                          </span>
+                          {badge}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Bottom Left Toolbar: Pagination & Navigator */}
@@ -465,7 +561,7 @@ export function AnaliticaReviewStudio({
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 {Object.values(answers).filter((a) => {
                   const q = questions.find((item) => item.id === a.questionId);
-                  return q && q.correctAnswer.every((k) => a.selectedAnswers.includes(k));
+                  return q && evaluateAnswer(q, a);
                 }).length}{" "}
                 Benar
               </span>
@@ -542,56 +638,137 @@ export function AnaliticaReviewStudio({
                       <span className="text-sm">🧐</span>
                     </h4>
                     <span className="text-[11px] font-mono text-on-surface-variant">
-                      Kunci: <strong>Opsi {correctKeys.join(", ")}</strong>
+                      Kunci:{" "}
+                      <strong>
+                        {currentQ.type === "boolean"
+                          ? currentQ.correctAnswer
+                              .map((a) => {
+                                const [k, v] = a.split(":");
+                                return `${k}: ${v?.toLowerCase() === "benar" ? "Benar" : "Salah"}`;
+                              })
+                              .join(", ")
+                          : `Opsi ${correctKeys.join(", ")}`}
+                      </strong>
                     </span>
                   </div>
 
                   {/* Bedah Tiap Opsi */}
-                  <div className="space-y-2.5">
-                    {currentQ.options.map((opt) => {
-                      const isKunci = correctKeys.includes(opt.key);
-                      const isUser = userSelected.includes(opt.key);
+                  {currentQ.type === "boolean" ? (
+                    <div className="space-y-2.5">
+                      {currentQ.options.map((opt) => {
+                        const optKeyLower = opt.key.toLowerCase();
+                        const userAnsItem = userSelected.find((a) =>
+                          a.toLowerCase().startsWith(`${optKeyLower}:`)
+                        );
+                        const userChoice = userAnsItem
+                          ? userAnsItem.split(":")[1]?.toLowerCase()
+                          : null;
+                        const correctAnsItem = correctKeys.find((a) =>
+                          a.toLowerCase().startsWith(`${optKeyLower}:`)
+                        );
+                        const correctChoice = correctAnsItem
+                          ? correctAnsItem.split(":")[1]?.toLowerCase()
+                          : null;
 
-                      return (
-                        <div
-                          key={opt.key}
-                          className={`p-3 rounded-xl border text-body-xs leading-relaxed transition-all ${
-                            isKunci
-                              ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
-                              : isUser
-                              ? "bg-red-500/10 border-red-500/40 text-red-950 dark:text-red-100"
-                              : "bg-surface-container-lowest border-outline-variant/60 text-on-surface"
-                          }`}
-                        >
-                          <div className="flex items-center gap-1.5 font-bold mb-1 font-mono">
-                            {isKunci ? (
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                            ) : (
-                              <XCircle className="w-4 h-4 text-red-500 shrink-0" />
-                            )}
-                            <span>Opsi {opt.key}:</span>
-                            {isKunci && (
-                              <span className="text-[10px] uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold ml-1">
-                                Kunci Benar
+                        const isMatch =
+                          userChoice && correctChoice && userChoice === correctChoice;
+
+                        return (
+                          <div
+                            key={opt.key}
+                            className={`p-3 rounded-xl border text-body-xs leading-relaxed transition-all ${
+                              isMatch
+                                ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
+                                : "bg-red-500/10 border-red-500/40 text-red-950 dark:text-red-100"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 font-bold mb-1 font-mono flex-wrap">
+                              {isMatch ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              ) : (
+                                <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                              )}
+                              <span>Pernyataan {opt.key}:</span>
+                              <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant">
+                                Kunci:{" "}
+                                <strong className="text-primary uppercase">
+                                  {correctChoice || "-"}
+                                </strong>
                               </span>
-                            )}
-                            {isUser && !isKunci && (
-                              <span className="text-[10px] uppercase px-1.5 py-0.2 rounded bg-red-500/20 text-red-700 dark:text-red-300 font-bold ml-1">
-                                Jawaban Anda
+                              <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-surface-container border border-outline-variant">
+                                Anda:{" "}
+                                <strong
+                                  className={
+                                    isMatch
+                                      ? "text-emerald-600 uppercase"
+                                      : "text-red-500 uppercase"
+                                  }
+                                >
+                                  {userChoice || "Belum"}
+                                </strong>
                               </span>
-                            )}
+                              <span
+                                className={`text-[10px] uppercase px-1.5 py-0.2 rounded font-bold ml-auto ${
+                                  isMatch
+                                    ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                                    : "bg-red-500/20 text-red-700 dark:text-red-300"
+                                }`}
+                              >
+                                {isMatch ? "Tepat" : "Keliru"}
+                              </span>
+                            </div>
+                            <p className="text-on-surface-variant pl-5">{opt.text}</p>
                           </div>
-                          <p className="text-on-surface-variant pl-5">
-                            {isKunci
-                              ? `Tepat! Opsi ini merupakan solusi yang sesuai kaidah materi ${currentQ.topic}.`
-                              : isUser
-                              ? `Pilihan ini kurang tepat. Perhatikan batasan dan premis pada pokok soal.`
-                              : `Pengecoh. Tidak sesuai dengan indikator pencapaian kompetensi pada soal.`}
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {currentQ.options.map((opt) => {
+                        const isKunci = correctKeys.includes(opt.key);
+                        const isUser = userSelected.includes(opt.key);
+
+                        return (
+                          <div
+                            key={opt.key}
+                            className={`p-3 rounded-xl border text-body-xs leading-relaxed transition-all ${
+                              isKunci
+                                ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-950 dark:text-emerald-100"
+                                : isUser
+                                ? "bg-red-500/10 border-red-500/40 text-red-950 dark:text-red-100"
+                                : "bg-surface-container-lowest border-outline-variant/60 text-on-surface"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 font-bold mb-1 font-mono">
+                              {isKunci ? (
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                              ) : (
+                                <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+                              )}
+                              <span>Opsi {opt.key}:</span>
+                              {isKunci && (
+                                <span className="text-[10px] uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold ml-1">
+                                  Kunci Benar
+                                </span>
+                              )}
+                              {isUser && !isKunci && (
+                                <span className="text-[10px] uppercase px-1.5 py-0.2 rounded bg-red-500/20 text-red-700 dark:text-red-300 font-bold ml-1">
+                                  Jawaban Anda
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-on-surface-variant pl-5">
+                              {isKunci
+                                ? `Tepat! Opsi ini merupakan solusi yang sesuai kaidah materi ${currentQ.topic}.`
+                                : isUser
+                                ? `Pilihan ini kurang tepat. Perhatikan batasan dan premis pada pokok soal.`
+                                : `Pengecoh. Tidak sesuai dengan indikator pencapaian kompetensi pada soal.`}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Box Penjelasan Resmi */}
                   <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant shadow-elevation-1 space-y-2 mt-3">
@@ -783,10 +960,7 @@ export function AnaliticaReviewStudio({
             <div className="grid grid-cols-6 gap-2">
               {questions.map((q, idx) => {
                 const ans = answers[q.id];
-                const isCorrect =
-                  ans &&
-                  ans.selectedAnswers.length === q.correctAnswer.length &&
-                  ans.selectedAnswers.every((k) => q.correctAnswer.includes(k));
+                const isCorrect = ans ? evaluateAnswer(q, ans) : false;
                 const isCurrent = idx === currentIndex;
 
                 return (

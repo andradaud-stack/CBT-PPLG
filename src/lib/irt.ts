@@ -35,14 +35,16 @@ export function evaluateAnswer(question: Question, answer?: StudentAnswer): bool
     return false;
   }
 
-  const userSet = new Set(answer.selectedAnswers);
-  const correctSet = new Set(question.correctAnswer);
+  // Normalisasi token jawaban (mengabaikan kapitalisasi dan menyamakan delimiter `:` / `_`)
+  const normalize = (val: string) => val.trim().toLowerCase().replace("_", ":");
+  const userSet = new Set(answer.selectedAnswers.map(normalize));
+  const correctSet = new Set(question.correctAnswer.map(normalize));
 
   if (userSet.size !== correctSet.size) {
     return false;
   }
 
-  for (const item of question.correctAnswer) {
+  for (const item of correctSet) {
     if (!userSet.has(item)) {
       return false;
     }

@@ -97,7 +97,10 @@ Buatkan ${count} butir soal HOTS baru berkualitas tinggi dengan kriteria:
 - Sub-Elemen / Topik: ${targetTopic}
 - Tingkat Kesulitan: ${difficulty || "sedang"}
 - Standar: Standar kelulusan SMK PPLG, studi kasus industri riil, kode rapi jika ada program, 5 pilihan jawaban (A, B, C, D, E) dengan panjang yang seimbang, tidak mudah ditebak.
-- Format tipe: dominan "single" (pilihan ganda 1 jawaban benar) atau "multiple" (pilih lebih dari 1) atau "boolean" (Benar/Salah).
+- Format tipe:
+  1. "single": pilihan ganda 1 jawaban benar (options A sampai E, correctAnswer: ["A"]).
+  2. "multiple": pilihan ganda kompleks pilih >1 (options A sampai E, correctAnswer misal ["A", "C"]).
+  3. "boolean": Pilihan Ganda Kategori Benar/Salah (options berisi 3 butir pernyataan A, B, C; correctAnswer berisi status tiap pernyataan misal ["A:benar", "B:salah", "C:benar"]).
 
 Berikan respon HANYA berupa JSON array murni tanpa markdown pembungkus (tanpa \`\`\`json) dengan format array of objects:
 [
